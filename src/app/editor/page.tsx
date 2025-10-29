@@ -13,8 +13,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { ItemControls } from "@/components/editor/ItemControls";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs as UITabs, TabsList as UITabsList, TabsTrigger as UITabsTrigger, TabsContent as UITabsContent } from "@/components/ui/tabs";
-import { useRef, useState } from "react";
-import { MapPin, Mail, Phone, Globe, Linkedin } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline } from "lucide-react";
 import { toPng } from 'html-to-image';
 import jsPDF from "jspdf";
 import Timeline from '@mui/lab/Timeline';
@@ -75,6 +75,8 @@ type ResumeSection = TextSection | ListSection | ExperienceSection | EducationSe
 export default function EditorPage() {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const [dragState, setDragState] = useState<{ kind: "exp" | "edu" | "list" | "skill" | null; sectionId?: string; from: number } | null>(null);
+  const [showFormatToolbar, setShowFormatToolbar] = useState(false);
+  const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
   const [layout, setLayout] = useState<"split" | "classic" | "hybrid">("split");
   const [font, setFont] = useState("Nunito");
   const [size, setSize] = useState<"sm" | "md" | "lg">("md");
@@ -96,6 +98,34 @@ export default function EditorPage() {
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
+
+  // Text formatting functions
+  const applyFormat = (command: string) => {
+    document.execCommand(command, false);
+  };
+
+  // Handle text selection for formatting toolbar
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().length > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        // Position toolbar above the selection
+        setToolbarPosition({
+          top: rect.top + window.scrollY - 50,
+          left: rect.left + window.scrollX + (rect.width / 2) - 75
+        });
+        setShowFormatToolbar(true);
+      } else {
+        setShowFormatToolbar(false);
+      }
+    };
+
+    document.addEventListener('selectionchange', handleSelection);
+    return () => document.removeEventListener('selectionchange', handleSelection);
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -401,6 +431,40 @@ export default function EditorPage() {
 
   return (
     <div className="h-dvh grid grid-rows-[auto,1fr]">
+      {/* Floating Text Formatting Toolbar */}
+      {showFormatToolbar && (
+        <div 
+          className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 px-2 py-1.5 flex gap-1"
+          style={{ 
+            top: `${toolbarPosition.top}px`, 
+            left: `${toolbarPosition.left}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <button
+            onClick={() => applyFormat('bold')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+            title="Bold (Ctrl+B)"
+          >
+            <Bold className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => applyFormat('italic')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+            title="Italic (Ctrl+I)"
+          >
+            <Italic className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => applyFormat('underline')}
+            className="p-2 hover:bg-gray-100 rounded transition-colors"
+            title="Underline (Ctrl+U)"
+          >
+            <Underline className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top toolbar */}
       <div className="flex items-center gap-4 px-4 py-2 border-b bg-background">
         <div className="font-semibold">ResumeMaker.Online</div>
@@ -979,8 +1043,8 @@ export default function EditorPage() {
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="space-y-6">
+            ) : layout === "hybrid" ? (
+              <div className="grid grid-cols-2 gap-8">
                 {sections.filter(s=> visible[s.id] !== false).map((s, idx, arr) => (
                   <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
@@ -1118,6 +1182,226 @@ export default function EditorPage() {
                             </TimelineSeparator>
                             <TimelineContent
                               sx={{ paddingTop: 0, paddingBottom: 2 }}
+                              className="cursor-move text-sm"
+                              draggable
+                              onDragStart={(e)=>{ setDragState({ kind: "edu", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
+                              onDragOver={(e)=> e.preventDefault()}
+                              onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "edu") { reorderEducation(from, i); } setDragState(null); }}
+                            >
+                              <div className="relative">
+                                <div className="flex items-start justify-between gap-4 mb-1">
+                                  <span
+                                    className="font-bold outline-none"
+                                    style={{ color: theme.color }}
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e)=> updateEducationItem(i,{school: (e.target as HTMLElement).innerText})}
+                                  >{ed.school}</span>
+                                  <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
+                                    <span
+                                      className="outline-none"
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e)=> updateEducationItem(i,{from: (e.target as HTMLElement).innerText})}
+                                    >{ed.from}</span>{" "}-{" "}
+                                    <span
+                                      className="outline-none"
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e)=> updateEducationItem(i,{to: (e.target as HTMLElement).innerText})}
+                                    >{ed.to}</span>
+                                  </div>
+                                </div>
+                                <div
+                                  className="outline-none font-semibold text-gray-800"
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e)=> updateEducationItem(i,{degree: (e.target as HTMLElement).innerText})}
+                                >{ed.degree}</div>
+                                <ItemControls
+                                  className="right-0 -top-6"
+                                  onMoveUp={() => moveEducation(i,-1)}
+                                  onMoveDown={() => moveEducation(i,1)}
+                                  onInsertAfter={() => insertEducationAfter(i)}
+                                  onRemove={() => removeEducation(i)}
+                                />
+                              </div>
+                            </TimelineContent>
+                          </TimelineItem>
+                        ))}
+                      </Timeline>
+                    ) : s.type === "skills" ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                        {s.skills.map((sk, i)=> (
+                          <div
+                            key={i}
+                            className="rounded border px-2 py-1 relative group cursor-move"
+                            draggable
+                            onDragStart={(e)=>{ setDragState({ kind: "skill", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
+                            onDragOver={(e)=> e.preventDefault()}
+                            onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "skill") { reorderSkill(from, i); } setDragState(null); }}
+                          >
+                            <span
+                              className="outline-none"
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e)=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.map((v,idx)=> idx===i ? (e.target as HTMLElement).innerText : v) } : sec))}
+                            >{sk}</span>
+                            <ItemControls className="-right-6" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
+                          </div>
+                        ))}
+                        <button className="rounded border px-2 py-1 text-sm" onClick={()=> addSkill("New skill")}>＋</button>
+                      </div>
+                    ) : s.type === "text" ? (
+                      <p
+                        className="whitespace-pre-wrap leading-relaxed text-sm text-gray-700 outline-none"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e)=> updateTextLikeSection(s.id, (e.target as HTMLElement).innerText)}
+                      >{s.content || "Enter your professional summary..."}</p>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {sections.filter(s=> visible[s.id] !== false).map((s, idx, arr) => (
+                  <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
+                    <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
+                      <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
+                      <div className="flex items-center gap-1">
+                        {s.type === "list" && (
+                          <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
+                        )}
+                        {s.type === "experience" && (
+                          <ItemControls onInsertAfter={()=> addExperienceItem()} />
+                        )}
+                        {s.type === "education" && (
+                          <ItemControls onInsertAfter={()=> addEducationItem()} />
+                        )}
+                        {s.type === "skills" && (
+                          <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
+                        )}
+                        <ItemControls 
+                          className="ml-2"
+                          onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
+                          onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
+                          onRemove={()=> removeSection(s.id)}
+                        />
+                      </div>
+                    </div>
+                    {s.type === "list" ? (
+                      <ul className="space-y-2 text-sm">
+                        {s.content.split(/\n+/).filter(Boolean).map((line, i)=> (
+                          <li
+                            key={i}
+                            className="relative group cursor-move flex gap-2"
+                            draggable
+                            onDragStart={(e)=>{ setDragState({ kind: "list", sectionId: s.id, from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
+                            onDragOver={(e)=> e.preventDefault()}
+                            onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "list" && dragState.sectionId === s.id) { reorderListLine(s.id, from, i); } setDragState(null); }}
+                          >
+                            <span style={{ color: theme.color }}>•</span>
+                            <span
+                              className="outline-none flex-1"
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e)=> updateListLine(s.id, i, (e.target as HTMLElement).innerText)}
+                            >{line}</span>
+                            <ItemControls
+                              className="-right-6"
+                              onMoveUp={()=> moveListLine(s.id, i, -1)}
+                              onMoveDown={()=> moveListLine(s.id, i, 1)}
+                              onInsertAfter={()=> insertListLineAfter(s.id, i)}
+                              onRemove={()=> removeListLine(s.id, i)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : s.type === "experience" ? (
+                      <Timeline style={{ padding: 0, margin: 0 }}>
+                        {s.items.map((it, i)=> (
+                          <TimelineItem
+                            key={i}
+                            style={{ minHeight: 'auto' }}
+                            className="group"
+                          >
+                            <TimelineSeparator>
+                              <TimelineDot style={{ backgroundColor: theme.color, margin: '12px 0' }} />
+                              {i < s.items.length - 1 && <TimelineConnector style={{ backgroundColor: hexToRgba(theme.color, 0.3) }} />}
+                            </TimelineSeparator>
+                            <TimelineContent
+                              style={{ paddingTop: 0, paddingBottom: 3 }}
+                              className="cursor-move"
+                              draggable
+                              onDragStart={(e)=>{ setDragState({ kind: "exp", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
+                              onDragOver={(e)=> e.preventDefault()}
+                              onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "exp") { reorderExperience(from, i); } setDragState(null); }}
+                            >
+                              <div className="relative">
+                                <div className="flex items-start justify-between gap-4 mb-1">
+                                  <span
+                                    className="outline-none font-bold"
+                                    style={{ color: theme.color }}
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onBlur={(e)=> updateExperienceItem(i,{company: (e.target as HTMLElement).innerText})}
+                                  >{it.company}</span>
+                                  <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
+                                    <span
+                                      className="outline-none"
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e)=> updateExperienceItem(i,{from: (e.target as HTMLElement).innerText})}
+                                    >{it.from}</span>
+                                    {" "}-{" "}
+                                    <span
+                                      className="outline-none"
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e)=> updateExperienceItem(i,{to: (e.target as HTMLElement).innerText})}
+                                    >{it.to}</span>
+                                  </div>
+                                </div>
+                                <div
+                                  className="outline-none font-semibold text-gray-800 mb-2"
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e)=> updateExperienceItem(i,{role: (e.target as HTMLElement).innerText})}
+                                >{it.role}</div>
+                                <div
+                                  className="text-sm leading-relaxed whitespace-pre-wrap outline-none text-gray-700"
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  onBlur={(e)=> updateExperienceItem(i,{bullets: (e.target as HTMLElement).innerText})}
+                                >{it.bullets}</div>
+                                <ItemControls
+                                  className="right-0 -top-6"
+                                  onAi={() => aiBulletsForExperience(i)}
+                                  onMoveUp={() => moveExperience(i,-1)}
+                                  onMoveDown={() => moveExperience(i,1)}
+                                  onInsertAfter={() => insertExperienceAfter(i)}
+                                  onRemove={() => removeExperience(i)}
+                                />
+                              </div>
+                            </TimelineContent>
+                          </TimelineItem>
+                        ))}
+                      </Timeline>
+                    ) : s.type === "education" ? (
+                      <Timeline style={{ padding: 0, margin: 0 }}>
+                        {s.items.map((ed, i)=>(
+                          <TimelineItem
+                            key={i}
+                            style={{ minHeight: 'auto' }}
+                            className="group"
+                          >
+                            <TimelineSeparator>
+                              <TimelineDot style={{ backgroundColor: theme.color, margin: '12px 0' }} />
+                              {i < s.items.length - 1 && <TimelineConnector style={{ backgroundColor: hexToRgba(theme.color, 0.3) }} />}
+                            </TimelineSeparator>
+                            <TimelineContent
+                              style={{ paddingTop: 0, paddingBottom: 2 }}
                               className="cursor-move text-sm"
                               draggable
                               onDragStart={(e)=>{ setDragState({ kind: "edu", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
