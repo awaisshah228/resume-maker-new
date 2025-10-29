@@ -1046,7 +1046,7 @@ export default function EditorPage() {
                           {s.skills.map((sk, i)=> (
                             <div
                               key={i}
-                              className="rounded-full px-3 py-1.5 relative group transition-all hover:shadow-md"
+                              className="rounded-full px-2.5 py-1 relative group transition-all hover:shadow-md"
                               style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color, fontWeight: 500 }}
                             >
                               <span
@@ -1059,7 +1059,7 @@ export default function EditorPage() {
                             </div>
                           ))}
                           <button
-                            className="rounded-full px-3 py-1.5 text-sm font-medium transition-all hover:shadow-md"
+                            className="rounded-full px-2.5 py-1 text-sm font-medium transition-all hover:shadow-md"
                             style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }}
                             onClick={()=> addSkill("New skill")}
                           >＋</button>
@@ -1284,7 +1284,7 @@ export default function EditorPage() {
                               <ItemControls className="-right-6 z-30!" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
                             </div>
                           ))}
-                          <button className="rounded-full px-3 py-1.5 text-sm font-medium relative z-20 transition-all hover:shadow-md" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }} onClick={()=> addSkill("New skill")}>＋</button>
+                          <button className="rounded-full px-2.5 py-1 text-sm font-medium relative z-20 transition-all hover:shadow-md" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }} onClick={()=> addSkill("New skill")}>＋</button>
                         </div>
                       ) : s.type === "text" ? (
                         <p
