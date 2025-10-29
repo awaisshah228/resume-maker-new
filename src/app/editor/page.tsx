@@ -83,6 +83,13 @@ export default function EditorPage() {
   const [size, setSize] = useState<"sm" | "md" | "lg">("md");
   const [showPhoto, setShowPhoto] = useState(true);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [atsMode, setAtsMode] = useState(false);
+  const [savedBeforeAts, setSavedBeforeAts] = useState<null | {
+    showPhoto: boolean;
+    theme: { name: string; color: string };
+    font: string;
+    layout: "split" | "classic" | "hybrid";
+  }>(null);
   const [theme, setTheme] = useState<{ name: string; color: string }>(
     { name: "blue", color: "#234795" }
   );
@@ -407,6 +414,30 @@ export default function EditorPage() {
     };
     return icons[iconName] || LinkIcon;
   };
+
+  // Apply ATS defaults when toggled, and restore when turned off
+  useEffect(() => {
+    if (atsMode) {
+      // Save current settings once
+      setSavedBeforeAts(prev => prev ?? {
+        showPhoto,
+        theme,
+        font,
+        layout,
+      });
+      setShowPhoto(false);
+      setTheme({ name: "black", color: "#111827" });
+      setFont("Inter");
+      setLayout("classic");
+    } else if (savedBeforeAts) {
+      // Restore saved settings
+      setShowPhoto(savedBeforeAts.showPhoto);
+      setTheme(savedBeforeAts.theme);
+      setFont(savedBeforeAts.font);
+      setLayout(savedBeforeAts.layout);
+      setSavedBeforeAts(null);
+    }
+  }, [atsMode]);
 
   const exportPdf = async () => {
     if (!previewRef.current) return;
@@ -777,6 +808,10 @@ export default function EditorPage() {
         </DropdownMenu>
 
         <div className="ml-auto space-x-2 flex items-center">
+          <div className="flex items-center gap-2 text-sm">
+            <span>ATS Mode</span>
+            <Switch checked={atsMode} onCheckedChange={(v)=> setAtsMode(!!v)} />
+          </div>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="secondary">AI Tools</Button>
@@ -790,6 +825,7 @@ export default function EditorPage() {
                   <UITabsTrigger value="summary">Summary</UITabsTrigger>
                   <UITabsTrigger value="bullets">Bullets</UITabsTrigger>
                   <UITabsTrigger value="skills">Skills</UITabsTrigger>
+                  <UITabsTrigger value="ats">ATS</UITabsTrigger>
                 </UITabsList>
                 <UITabsContent value="summary" className="space-y-2">
                   <Textarea id="ai-summary" placeholder="Describe your role, highlights..." />
@@ -818,6 +854,42 @@ export default function EditorPage() {
                     const list = String(data.text ?? "").split(/,|\n/).map(s=> s.trim()).filter(Boolean);
                     setSections(prev=> prev.map(s=> s.id==="skills" && s.type==="skills" ? { ...s, skills: list } : s));
                   }}>Generate Skills</Button>
+                </UITabsContent>
+                <UITabsContent value="ats" className="space-y-2">
+                  <Textarea id="ai-ats-jd" placeholder="Paste the target job description..." />
+                  <Button onClick={async()=>{
+                    const jd = (document.getElementById("ai-ats-jd") as HTMLTextAreaElement)?.value;
+                    const currentSummary = (sections.find(s=> s.id==="about" && s.type==="text") as any)?.content ?? "";
+                    const currentSkills = (sections.find(s=> s.id==="skills" && s.type==="skills") as any)?.skills?.join(", ") ?? "";
+                    const exp = (sections.find(s=> s.type==="experience") as any)?.items?.[0];
+                    const expBlock = exp ? `${exp.company} | ${exp.role} | ${exp.from}-${exp.to}\n${exp.bullets}` : "";
+                    const payload = [
+                      "JOB_DESCRIPTION:\n"+ (jd||""),
+                      "\nCURRENT_SUMMARY:\n"+ currentSummary,
+                      "\nCURRENT_SKILLS:\n"+ currentSkills,
+                      "\nCURRENT_EXPERIENCE:\n"+ expBlock,
+                      "\nReturn ATS-optimized SUMMARY, SKILLS, and BULLETS per the instructed format."
+                    ].join("\n");
+                    const res = await fetch("/api/ai/generate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "ats", input: payload }) });
+                    const data = await res.json();
+                    const text = String(data.text ?? "");
+                    const sumMatch = text.match(/SUMMARY:\s*([\s\S]*?)\n\s*SKILLS:/i);
+                    const skillsMatch = text.match(/SKILLS:\s*([\s\S]*?)\n\s*BULLETS:/i);
+                    const bulletsMatch = text.match(/BULLETS:\s*([\s\S]*)/i);
+                    const newSummary = sumMatch?.[1]?.trim() ?? "";
+                    const newSkills = (skillsMatch?.[1] ?? "").split(/,|\n/).map(s=> s.trim()).filter(Boolean);
+                    const newBullets = (bulletsMatch?.[1] ?? "").split(/\n+/).map(l=> l.replace(/^[-•\s]+/,'').trim()).filter(Boolean).join("\n• ");
+                    if (newSummary) {
+                      setSections(prev=> prev.map(s=> s.id==="about" && s.type==="text" ? { ...s, content: newSummary } : s));
+                    }
+                    if (newSkills.length) {
+                      setSections(prev=> prev.map(s=> s.id==="skills" && s.type==="skills" ? { ...s, skills: newSkills } : s));
+                    }
+                    if (newBullets) {
+                      setSections(prev=> prev.map(s=> s.id==="work" && s.type==="experience" ? { ...s, items: s.items.map((it, i)=> i===0 ? { ...it, bullets: `• ${newBullets}` } : it) } : s));
+                    }
+                    setAtsMode(true);
+                  }}>Optimize for ATS</Button>
                 </UITabsContent>
               </UITabs>
             </DialogContent>
@@ -864,22 +936,22 @@ export default function EditorPage() {
                     <div className="text-sm flex flex-wrap gap-5 pt-2" style={{ color: '#6b7280' }}>
                       {visible.location && (
                         <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setLocation((e.target as HTMLElement).innerText)}>
-                          <MapPin size={16} color={theme.color} strokeWidth={2} />{location}
+                          {!atsMode && <MapPin size={16} color={theme.color} strokeWidth={2} />}{location}
                         </span>
                       )}
                       {visible.email && (
                         <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setEmail((e.target as HTMLElement).innerText)}>
-                          <Mail size={16} color={theme.color} strokeWidth={2} />{email}
+                          {!atsMode && <Mail size={16} color={theme.color} strokeWidth={2} />}{email}
                         </span>
                       )}
                       {visible.phone && (
                         <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setPhone((e.target as HTMLElement).innerText)}>
-                          <Phone size={16} color={theme.color} strokeWidth={2} />{phone}
+                          {!atsMode && <Phone size={16} color={theme.color} strokeWidth={2} />}{phone}
                         </span>
                       )}
                       {customLinks.map(link => { const IconComponent = getIconComponent(link.icon); return (
                         <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 outline-none hover:underline cursor-pointer" contentEditable suppressContentEditableWarning onBlur={(e)=> updateCustomLink(link.id, "label", (e.target as HTMLElement).innerText)}>
-                          <IconComponent size={16} color={theme.color} strokeWidth={2} />{link.label}
+                          {!atsMode && <IconComponent size={16} color={theme.color} strokeWidth={2} />}{link.label}
                         </a>
                       ); })}
                     </div>
@@ -938,17 +1010,17 @@ export default function EditorPage() {
                 <div className="text-sm flex flex-wrap gap-5 pt-2" style={{ color: '#6b7280' }}>
                   {visible.location && (
                     <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setLocation((e.target as HTMLElement).innerText)}>
-                      <MapPin size={16} color={theme.color} strokeWidth={2} />{location}
+                      {!atsMode && <MapPin size={16} color={theme.color} strokeWidth={2} />}{location}
                     </span>
                   )}
                   {visible.email && (
                     <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setEmail((e.target as HTMLElement).innerText)}>
-                      <Mail size={16} color={theme.color} strokeWidth={2} />{email}
+                      {!atsMode && <Mail size={16} color={theme.color} strokeWidth={2} />}{email}
                     </span>
                   )}
                   {visible.phone && (
                     <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setPhone((e.target as HTMLElement).innerText)}>
-                      <Phone size={16} color={theme.color} strokeWidth={2} />{phone}
+                      {!atsMode && <Phone size={16} color={theme.color} strokeWidth={2} />}{phone}
                     </span>
                   )}
                   {/* Custom Links in Header */}
@@ -965,7 +1037,7 @@ export default function EditorPage() {
                         suppressContentEditableWarning
                         onBlur={(e)=> updateCustomLink(link.id, "label", (e.target as HTMLElement).innerText)}
                       >
-                        <IconComponent size={16} color={theme.color} strokeWidth={2} />{link.label}
+                        {!atsMode && <IconComponent size={16} color={theme.color} strokeWidth={2} />}{link.label}
                       </a>
                     );
                   })}
@@ -984,7 +1056,7 @@ export default function EditorPage() {
                     <div className="space-y-3 text-sm">
                       {visible.location && (
                         <div className="flex items-start gap-2">
-                          <MapPin size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          {!atsMode && <MapPin size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />}
                           <span 
                             className="outline-none flex-1" 
                             contentEditable 
@@ -997,7 +1069,7 @@ export default function EditorPage() {
                       )}
                       {visible.email && (
                         <div className="flex items-start gap-2">
-                          <Mail size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          {!atsMode && <Mail size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />}
                           <span 
                             className="outline-none flex-1 break-all" 
                             contentEditable 
@@ -1010,7 +1082,7 @@ export default function EditorPage() {
                       )}
                       {visible.phone && (
                         <div className="flex items-start gap-2">
-                          <Phone size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          {!atsMode && <Phone size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />}
                           <span 
                             className="outline-none flex-1" 
                             contentEditable 
@@ -1026,7 +1098,7 @@ export default function EditorPage() {
                         const IconComponent = getIconComponent(link.icon);
                         return (
                           <div key={link.id} className="flex items-start gap-2 group/link">
-                            <IconComponent size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                            {!atsMode && <IconComponent size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />}
                             <a 
                               href={link.url}
                               target="_blank"
