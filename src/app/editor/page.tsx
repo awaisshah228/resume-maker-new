@@ -92,6 +92,7 @@ export default function EditorPage() {
   const [email, setEmail] = useState("you@email.com");
   const [phone, setPhone] = useState("+123456789");
   const [customLinks, setCustomLinks] = useState<{ id: string; label: string; url: string; icon: string }[]>([]);
+  const [nameNextToPhoto, setNameNextToPhoto] = useState(true);
   
   // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -681,6 +682,10 @@ export default function EditorPage() {
                   <Switch checked={!!visible[item.k]} onCheckedChange={(v)=>setVisible(s=>({...s,[item.k]:!!v}))} />
                 </div>
               ))}
+              <div className="flex items-center justify-between gap-2 col-span-2">
+                <span className="text-sm">Name next to photo</span>
+                <Switch checked={nameNextToPhoto} onCheckedChange={(v)=> setNameNextToPhoto(!!v)} />
+              </div>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Custom Links</DropdownMenuLabel>
@@ -832,7 +837,56 @@ export default function EditorPage() {
         <div className="rounded-xl p-8 shadow-2xl overflow-visible" style={{ backgroundColor: hexToRgba(theme.color, 0.08) }}>
           <div className="border-2 rounded-lg p-12 bg-white shadow-lg overflow-visible" ref={previewRef} style={{ borderColor: hexToRgba(theme.color, 0.12) }}>
           <div className="grid gap-8 overflow-visible" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
-            {visible.picture && showPhoto ? (
+            {nameNextToPhoto && visible.picture && showPhoto ? (
+              <header className="flex items-center gap-6">
+                <div className="relative group">
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="Profile" className="w-32 h-32 rounded-full object-cover shadow-md" />
+                  ) : (
+                    <div className="w-32 h-32 rounded-full bg-linear-to-br from-gray-200 to-gray-300 shadow-md flex items-center justify-center">
+                      <label htmlFor="photo-upload" className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">Click to upload</label>
+                    </div>
+                  )}
+                  <input id="photo-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  {photoUrl && (
+                    <label htmlFor="photo-upload" className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                      <span className="text-white text-sm">Change</span>
+                    </label>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h1 contentEditable suppressContentEditableWarning className="text-4xl font-bold outline-none tracking-tight" onBlur={e=> setName((e.target as HTMLElement).innerText)} style={{ color: theme.color }}>{name}</h1>
+                  <p contentEditable suppressContentEditableWarning className="text-base font-semibold outline-none uppercase tracking-wide" style={{ color: '#4b5563' }} onBlur={e=> setRole((e.target as HTMLElement).innerText)}>{role}</p>
+                  {layout !== "split" && (
+                    <div className="text-sm flex flex-wrap gap-5 pt-2" style={{ color: '#6b7280' }}>
+                      {visible.location && (
+                        <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setLocation((e.target as HTMLElement).innerText)}>
+                          <MapPin size={16} color={theme.color} strokeWidth={2} />{location}
+                        </span>
+                      )}
+                      {visible.email && (
+                        <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setEmail((e.target as HTMLElement).innerText)}>
+                          <Mail size={16} color={theme.color} strokeWidth={2} />{email}
+                        </span>
+                      )}
+                      {visible.phone && (
+                        <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setPhone((e.target as HTMLElement).innerText)}>
+                          <Phone size={16} color={theme.color} strokeWidth={2} />{phone}
+                        </span>
+                      )}
+                      {customLinks.map(link => { const IconComponent = getIconComponent(link.icon); return (
+                        <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 outline-none hover:underline cursor-pointer" contentEditable suppressContentEditableWarning onBlur={(e)=> updateCustomLink(link.id, "label", (e.target as HTMLElement).innerText)}>
+                          <IconComponent size={16} color={theme.color} strokeWidth={2} />{link.label}
+                        </a>
+                      ); })}
+                    </div>
+                  )}
+                </div>
+              </header>
+            ) : null}
+            {!nameNextToPhoto && (
+              <>
+              {visible.picture && showPhoto ? (
               <div className="relative group">
                 {photoUrl ? (
                   <img src={photoUrl} alt="Profile" className="w-32 h-32 rounded-full object-cover shadow-md" />
@@ -915,6 +969,8 @@ export default function EditorPage() {
                 </div>
               )}
             </header>
+              </>
+            )}
             {/* Body sections with layout-aware columns */}
             {layout === "split" ? (
               <div className="grid grid-cols-3 gap-10 overflow-visible">
