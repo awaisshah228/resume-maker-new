@@ -8,10 +8,12 @@ type ItemControlsProps = {
   onInsertAfter?: () => void;
   onRemove?: () => void;
   onAi?: () => void;
+  onTogglePlacement?: () => void;
+  placementLabel?: string;
   className?: string;
 };
 
-export function ItemControls({ onMoveUp, onMoveDown, onInsertAfter, onRemove, onAi, className }: ItemControlsProps) {
+export function ItemControls({ onMoveUp, onMoveDown, onInsertAfter, onRemove, onAi, onTogglePlacement, placementLabel, className }: ItemControlsProps) {
   const buttonClass = "w-7 h-7 rounded-md flex items-center justify-center text-xs font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95";
   
   return (
@@ -23,6 +25,15 @@ export function ItemControls({ onMoveUp, onMoveDown, onInsertAfter, onRemove, on
           title="AI Assistant"
         >
           ✦
+        </button>
+      ) : null}
+      {onTogglePlacement ? (
+        <button 
+          onClick={onTogglePlacement}
+          className={cn(buttonClass, "bg-linear-to-br from-orange-500 to-amber-600 text-white hover:from-orange-600 hover:to-amber-700")}
+          title={`Move to ${placementLabel === "left" ? "Right" : "Left"}`}
+        >
+          {placementLabel === "left" ? "→" : "←"}
         </button>
       ) : null}
       {onMoveUp ? (

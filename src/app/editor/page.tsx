@@ -14,7 +14,7 @@ import { ItemControls } from "@/components/editor/ItemControls";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs as UITabs, TabsList as UITabsList, TabsTrigger as UITabsTrigger, TabsContent as UITabsContent } from "@/components/ui/tabs";
 import { useRef, useState, useEffect } from "react";
-import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline, Sparkles } from "lucide-react";
+import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline, Sparkles, Link as LinkIcon, X } from "lucide-react";
 import { toPng } from 'html-to-image';
 import jsPDF from "jspdf";
 import Timeline from '@mui/lab/Timeline';
@@ -91,6 +91,7 @@ export default function EditorPage() {
   const [location, setLocation] = useState("City");
   const [email, setEmail] = useState("you@email.com");
   const [phone, setPhone] = useState("+123456789");
+  const [customLinks, setCustomLinks] = useState<{ id: string; label: string; url: string; icon: string }[]>([]);
   
   // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -191,7 +192,7 @@ export default function EditorPage() {
     { id: "education", title: "EDUCATION", type: "education", items: [
       { school: "University Name", degree: "BSCS, COMPUTER SCIENCE", from: "2019", to: "2023" }
     ], placement: "right" },
-    { id: "skills", title: "SKILLS", type: "skills", skills: ["React.Next", "Node.js", "TypeScript", "AWS", "Docker"], placement: "left" },
+    { id: "skills", title: "SKILLS", type: "skills", skills: ["React.Next", "Node.js", "TypeScript", "AWS", "Docker"], placement: "right" },
   ]);
 
   const [visible, setVisible] = useState<Record<string, boolean>>({
@@ -367,6 +368,42 @@ export default function EditorPage() {
     setVisible(prev => ({ ...prev, [sectionId]: false }));
   };
 
+  const toggleSectionPlacement = (sectionId: string) => {
+    setSections(prev => prev.map(s => 
+      s.id === sectionId ? { ...s, placement: s.placement === "left" ? "right" : "left" } as typeof s : s
+    ));
+  };
+
+  const addCustomLink = () => {
+    setCustomLinks(prev => [...prev, { 
+      id: `link-${Date.now()}`, 
+      label: "Website", 
+      url: "https://example.com",
+      icon: "globe"
+    }]);
+  };
+
+  const updateCustomLink = (id: string, field: "label" | "url" | "icon", value: string) => {
+    setCustomLinks(prev => prev.map(link => 
+      link.id === id ? { ...link, [field]: value } : link
+    ));
+  };
+
+  const removeCustomLink = (id: string) => {
+    setCustomLinks(prev => prev.filter(link => link.id !== id));
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const icons: Record<string, any> = {
+      globe: Globe,
+      linkedin: Linkedin,
+      link: LinkIcon,
+      mail: Mail,
+      phone: Phone,
+    };
+    return icons[iconName] || LinkIcon;
+  };
+
   const exportPdf = async () => {
     if (!previewRef.current) return;
     try {
@@ -475,7 +512,7 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="h-dvh grid grid-rows-[auto,1fr]">
+    <div className="min-h-dvh bg-linear-to-br from-gray-50 to-gray-100 flex flex-col">
       {/* Floating Text Formatting Toolbar */}
       {showFormatToolbar && (
         <div 
@@ -646,6 +683,51 @@ export default function EditorPage() {
               ))}
             </div>
             <DropdownMenuSeparator />
+            <DropdownMenuLabel>Custom Links</DropdownMenuLabel>
+            <div className="space-y-2 py-2 max-h-60 overflow-y-auto">
+              {customLinks.map(link => (
+                <div key={link.id} className="space-y-2 p-2 bg-gray-50 rounded">
+                  <div className="flex items-center gap-2">
+                    <Select value={link.icon} onValueChange={(v)=> updateCustomLink(link.id, "icon", v)}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="globe">🌐 Globe</SelectItem>
+                        <SelectItem value="linkedin">💼 LinkedIn</SelectItem>
+                        <SelectItem value="link">🔗 Link</SelectItem>
+                        <SelectItem value="mail">✉️ Mail</SelectItem>
+                        <SelectItem value="phone">📞 Phone</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      placeholder="Label (e.g., LinkedIn)" 
+                      value={link.label}
+                      onChange={(e)=> updateCustomLink(link.id, "label", e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={()=> removeCustomLink(link.id)}
+                      className="p-1 h-8 w-8"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <Input 
+                    placeholder="URL (https://...)" 
+                    value={link.url}
+                    onChange={(e)=> updateCustomLink(link.id, "url", e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addCustomLink} className="w-full">
+                ＋ Add Custom Link
+              </Button>
+            </div>
+            <DropdownMenuSeparator />
             <div className="flex items-center gap-2 mt-2">
               <Select value={newSectionType} onValueChange={(v)=> setNewSectionType(v as "text"|"list") }>
                 <SelectTrigger className="w-40">
@@ -736,7 +818,7 @@ export default function EditorPage() {
         </div>
       </div>
 
-      <main className="w-full max-w-4xl mx-auto p-6">
+      <main className="w-full max-w-4xl mx-auto p-6 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="text-sm text-muted-foreground">
             Layout: {layout} · Font: {font} · Size: {size}
@@ -747,9 +829,9 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <div className="rounded-xl p-8 shadow-2xl" style={{ backgroundColor: hexToRgba(theme.color, 0.08) }}>
-          <div className="border-2 rounded-lg p-12 bg-white shadow-lg" ref={previewRef} style={{ borderColor: hexToRgba(theme.color, 0.12) }}>
-          <div className="grid gap-8" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
+        <div className="rounded-xl p-8 shadow-2xl overflow-visible" style={{ backgroundColor: hexToRgba(theme.color, 0.08) }}>
+          <div className="border-2 rounded-lg p-12 bg-white shadow-lg overflow-visible" ref={previewRef} style={{ borderColor: hexToRgba(theme.color, 0.12) }}>
+          <div className="grid gap-8 overflow-visible" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
             {visible.picture && showPhoto ? (
               <div className="relative group">
                 {photoUrl ? (
@@ -794,28 +876,116 @@ export default function EditorPage() {
               >
                 {role}
               </p>
-              <div className="text-sm flex flex-wrap gap-5 pt-2" style={{ color: '#6b7280' }}>
-                {visible.location && (
-                  <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setLocation((e.target as HTMLElement).innerText)}>
-                    <MapPin size={16} color={theme.color} strokeWidth={2} />{location}
-                  </span>
-                )}
-                {visible.email && (
-                  <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setEmail((e.target as HTMLElement).innerText)}>
-                    <Mail size={16} color={theme.color} strokeWidth={2} />{email}
-                  </span>
-                )}
-                {visible.phone && (
-                  <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setPhone((e.target as HTMLElement).innerText)}>
-                    <Phone size={16} color={theme.color} strokeWidth={2} />{phone}
-                  </span>
-                )}
-              </div>
+              {/* Show contact details in header only for non-split layouts */}
+              {layout !== "split" && (
+                <div className="text-sm flex flex-wrap gap-5 pt-2" style={{ color: '#6b7280' }}>
+                  {visible.location && (
+                    <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setLocation((e.target as HTMLElement).innerText)}>
+                      <MapPin size={16} color={theme.color} strokeWidth={2} />{location}
+                    </span>
+                  )}
+                  {visible.email && (
+                    <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setEmail((e.target as HTMLElement).innerText)}>
+                      <Mail size={16} color={theme.color} strokeWidth={2} />{email}
+                    </span>
+                  )}
+                  {visible.phone && (
+                    <span className="inline-flex items-center gap-1.5 outline-none" contentEditable suppressContentEditableWarning onBlur={e=> setPhone((e.target as HTMLElement).innerText)}>
+                      <Phone size={16} color={theme.color} strokeWidth={2} />{phone}
+                    </span>
+                  )}
+                  {/* Custom Links in Header */}
+                  {customLinks.map(link => {
+                    const IconComponent = getIconComponent(link.icon);
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 outline-none hover:underline cursor-pointer"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e)=> updateCustomLink(link.id, "label", (e.target as HTMLElement).innerText)}
+                      >
+                        <IconComponent size={16} color={theme.color} strokeWidth={2} />{link.label}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </header>
             {/* Body sections with layout-aware columns */}
             {layout === "split" ? (
-              <div className="grid grid-cols-3 gap-10">
-                <div className="col-span-1 space-y-8">
+              <div className="grid grid-cols-3 gap-10 overflow-visible">
+                <div className="col-span-1 space-y-6 overflow-visible">
+                  {/* Personal Details in Left Sidebar */}
+                  <section className="space-y-3">
+                    <h2 className="text-base font-bold uppercase tracking-wide border-b-2 pb-2" style={{ color: theme.color, borderColor: theme.color }}>CONTACT</h2>
+                    <div className="space-y-3 text-sm">
+                      {visible.location && (
+                        <div className="flex items-start gap-2">
+                          <MapPin size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          <span 
+                            className="outline-none flex-1" 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            onBlur={e=> setLocation((e.target as HTMLElement).innerText)}
+                          >
+                            {location}
+                          </span>
+                        </div>
+                      )}
+                      {visible.email && (
+                        <div className="flex items-start gap-2">
+                          <Mail size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          <span 
+                            className="outline-none flex-1 break-all" 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            onBlur={e=> setEmail((e.target as HTMLElement).innerText)}
+                          >
+                            {email}
+                          </span>
+                        </div>
+                      )}
+                      {visible.phone && (
+                        <div className="flex items-start gap-2">
+                          <Phone size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                          <span 
+                            className="outline-none flex-1" 
+                            contentEditable 
+                            suppressContentEditableWarning 
+                            onBlur={e=> setPhone((e.target as HTMLElement).innerText)}
+                          >
+                            {phone}
+                          </span>
+                        </div>
+                      )}
+                      {/* Custom Links */}
+                      {customLinks.map(link => {
+                        const IconComponent = getIconComponent(link.icon);
+                        return (
+                          <div key={link.id} className="flex items-start gap-2 group/link">
+                            <IconComponent size={16} color={theme.color} className="mt-0.5 shrink-0" strokeWidth={2} />
+                            <a 
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="outline-none flex-1 hover:underline cursor-pointer"
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e)=> updateCustomLink(link.id, "label", (e.target as HTMLElement).innerText)}
+                            >
+                              {link.label}
+                            </a>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                  
+                  {/* Left Sidebar Sections */}
                   {sections.filter(s=> visible[s.id] !== false && s.placement === "left").map((s, idx, arr) => (
                     <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                       <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
@@ -831,10 +1001,12 @@ export default function EditorPage() {
                             <ItemControls onInsertAfter={()=> addEducationItem()} />
                           )}
                           {s.type === "skills" && (
-                            <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
+                            <Button size="sm" variant="secondary" className="relative z-20" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
                           )}
                           <ItemControls 
                             className="ml-2"
+                            onTogglePlacement={layout === "split" ? ()=> toggleSectionPlacement(s.id) : undefined}
+                            placementLabel={s.placement}
                             onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                             onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
                             onRemove={()=> removeSection(s.id)}
@@ -883,7 +1055,7 @@ export default function EditorPage() {
                                 suppressContentEditableWarning
                                 onBlur={(e)=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.map((v,idx)=> idx===i ? (e.target as HTMLElement).innerText : v) } : sec))}
                               >{sk}</span>
-                              <ItemControls className="-right-6" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
+                              <ItemControls className="-right-6 z-30!" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
                             </div>
                           ))}
                           <button
@@ -903,7 +1075,7 @@ export default function EditorPage() {
                     </section>
                   ))}
                 </div>
-                <div className="col-span-2 space-y-8">
+                <div className="col-span-2 space-y-8 overflow-visible">
                   {sections.filter(s=> visible[s.id] !== false && s.placement === "right").map((s, idx, arr) => (
                     <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
@@ -923,6 +1095,8 @@ export default function EditorPage() {
                         )}
                         <ItemControls 
                           className="ml-2"
+                          onTogglePlacement={layout === "split" ? ()=> toggleSectionPlacement(s.id) : undefined}
+                          placementLabel={s.placement}
                           onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                           onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
                           onRemove={()=> removeSection(s.id)}
@@ -1089,6 +1263,29 @@ export default function EditorPage() {
                             </TimelineItem>
                           ))}
                         </Timeline>
+                      ) : s.type === "skills" ? (
+                        <div className="flex flex-wrap gap-2 text-sm">
+                          {s.skills.map((sk, i)=> (
+                            <div
+                              key={i}
+                              className="rounded-full px-3 py-1.5 relative group cursor-move transition-all hover:shadow-md"
+                              style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color, fontWeight: 500 }}
+                              draggable
+                              onDragStart={(e)=>{ setDragState({ kind: "skill", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
+                              onDragOver={(e)=> e.preventDefault()}
+                              onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "skill") { reorderSkill(from, i); } setDragState(null); }}
+                            >
+                              <span
+                                className="outline-none"
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e)=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.map((v,idx)=> idx===i ? (e.target as HTMLElement).innerText : v) } : sec))}
+                              >{sk}</span>
+                              <ItemControls className="-right-6 z-30!" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
+                            </div>
+                          ))}
+                          <button className="rounded-full px-3 py-1.5 text-sm font-medium relative z-20 transition-all hover:shadow-md" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }} onClick={()=> addSkill("New skill")}>＋</button>
+                        </div>
                       ) : s.type === "text" ? (
                         <p
                           className="whitespace-pre-wrap leading-relaxed text-sm text-gray-700 outline-none"
@@ -1289,11 +1486,12 @@ export default function EditorPage() {
                         ))}
                       </Timeline>
                     ) : s.type === "skills" ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                      <div className="flex flex-wrap gap-2 text-sm">
                         {s.skills.map((sk, i)=> (
                           <div
                             key={i}
-                            className="rounded border px-2 py-1 relative group cursor-move"
+                            className="rounded-full px-3 py-1.5 relative group cursor-move transition-all hover:shadow-md"
+                            style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color, fontWeight: 500 }}
                             draggable
                             onDragStart={(e)=>{ setDragState({ kind: "skill", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
                             onDragOver={(e)=> e.preventDefault()}
@@ -1305,10 +1503,10 @@ export default function EditorPage() {
                               suppressContentEditableWarning
                               onBlur={(e)=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.map((v,idx)=> idx===i ? (e.target as HTMLElement).innerText : v) } : sec))}
                             >{sk}</span>
-                            <ItemControls className="-right-6" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
+                            <ItemControls className="-right-6 z-30!" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
                           </div>
                         ))}
-                        <button className="rounded border px-2 py-1 text-sm" onClick={()=> addSkill("New skill")}>＋</button>
+                        <button className="rounded-full px-3 py-1.5 text-sm font-medium relative z-20 transition-all hover:shadow-md" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }} onClick={()=> addSkill("New skill")}>＋</button>
                       </div>
                     ) : s.type === "text" ? (
                       <p
@@ -1509,11 +1707,12 @@ export default function EditorPage() {
                         ))}
                       </Timeline>
                     ) : s.type === "skills" ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                      <div className="flex flex-wrap gap-2 text-sm">
                         {s.skills.map((sk, i)=> (
                           <div
                             key={i}
-                            className="rounded border px-2 py-1 relative group cursor-move"
+                            className="rounded-full px-3 py-1.5 relative group cursor-move transition-all hover:shadow-md"
+                            style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color, fontWeight: 500 }}
                             draggable
                             onDragStart={(e)=>{ setDragState({ kind: "skill", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
                             onDragOver={(e)=> e.preventDefault()}
@@ -1525,10 +1724,10 @@ export default function EditorPage() {
                               suppressContentEditableWarning
                               onBlur={(e)=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.map((v,idx)=> idx===i ? (e.target as HTMLElement).innerText : v) } : sec))}
                             >{sk}</span>
-                            <ItemControls className="-right-6" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
+                            <ItemControls className="-right-6 z-30!" onRemove={()=> setSections(prev=> prev.map(sec=> sec.type==='skills' && sec.id===s.id ? { ...sec, skills: sec.skills.filter((_,idx)=> idx!==i) } : sec))} />
                           </div>
                         ))}
-                        <button className="rounded border px-2 py-1 text-sm" onClick={()=> addSkill("New skill")}>＋</button>
+                        <button className="rounded-full px-3 py-1.5 text-sm font-medium relative z-20 transition-all hover:shadow-md" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }} onClick={()=> addSkill("New skill")}>＋</button>
                       </div>
                     ) : s.type === "text" ? (
                       <p
