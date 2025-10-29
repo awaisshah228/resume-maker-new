@@ -230,6 +230,12 @@ export default function EditorPage() {
     }));
   };
 
+  const updateSectionTitle = (id: string, title: string) => {
+    setSections(prev => prev.map(s => 
+      s.id === id ? { ...s, title } : s
+    ));
+  };
+
   const addExperienceItem = () => {
     setSections(prev => prev.map(s => s.type === "experience" ? {
       ...s,
@@ -1136,7 +1142,16 @@ export default function EditorPage() {
                   {sections.filter(s=> visible[s.id] !== false && s.placement === "left").map((s, idx, arr) => (
                     <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                       <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
-                        <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
+                        <h2
+                          className="text-base font-bold uppercase tracking-wide outline-none cursor-text"
+                          style={{ color: theme.color }}
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e)=> {
+                            const t = (e.target as HTMLElement).innerText.trim();
+                            if (t) updateSectionTitle(s.id, t);
+                          }}
+                        >{s.title}</h2>
                         <div className="flex items-center gap-1">
                           {s.type === "list" && (
                             <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
@@ -1226,7 +1241,16 @@ export default function EditorPage() {
                   {sections.filter(s=> visible[s.id] !== false && s.placement === "right").map((s, idx, arr) => (
                     <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
-                      <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
+                      <h2
+                        className="text-base font-bold uppercase tracking-wide outline-none cursor-text"
+                        style={{ color: theme.color }}
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e)=> {
+                          const t = (e.target as HTMLElement).innerText.trim();
+                          if (t) updateSectionTitle(s.id, t);
+                        }}
+                      >{s.title}</h2>
                       <div className="flex items-center gap-1">
                         {s.type === "list" && (
                           <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
@@ -1458,7 +1482,16 @@ export default function EditorPage() {
                 {sections.filter(s=> visible[s.id] !== false).map((s, idx, arr) => (
                   <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
-                      <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
+                      <h2
+                        className="text-base font-bold uppercase tracking-wide outline-none cursor-text"
+                        style={{ color: theme.color }}
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e)=> {
+                          const t = (e.target as HTMLElement).innerText.trim();
+                          if (t) updateSectionTitle(s.id, t);
+                        }}
+                      >{s.title}</h2>
                       <div className="flex items-center gap-1">
                         {s.type === "list" && (
                           <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
@@ -1679,7 +1712,16 @@ export default function EditorPage() {
                 {sections.filter(s=> visible[s.id] !== false).map((s, idx, arr) => (
                   <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
-                      <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
+                      <h2
+                        className="text-base font-bold uppercase tracking-wide outline-none cursor-text"
+                        style={{ color: theme.color }}
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e)=> {
+                          const t = (e.target as HTMLElement).innerText.trim();
+                          if (t) updateSectionTitle(s.id, t);
+                        }}
+                      >{s.title}</h2>
                       <div className="flex items-center gap-1">
                         {s.type === "list" && (
                           <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
