@@ -199,7 +199,7 @@ export default function EditorPage() {
   const [sections, setSections] = useState<ResumeSection[]>([
     { id: "about", title: "ABOUT ME", type: "text", content: "Experienced full-stack blockchain developer with a focus on microservices architecture and DeFi in Blockchain, currently exploring Web3 and Defi in various chains and tools. Skilled in MERN, Aws, GCP and Web3, with a passion for innovation and learning.", placement: "left" },
     { id: "work", title: "EXPERIENCE", type: "experience", items: [
-      { company: "Company Name", role: "FULL STACK DEVELOPER", from: "June 2023", to: "Present (11 months)", bullets: "• Frontend: React.Next, Tailwind, Mui, Pwa\n• Backend: Nest, Node(ts) with postgres,mongo\n• Cloud: Aws(sqs,sns,dynmodb,ecs,rds)\n• Devops: Docker, Github actions, New relic,tf..." }
+      { company: "Company Name", role: "FULL STACK DEVELOPER", from: "June 2023", to: "Present (11 months)", bullets: ""}
     ], placement: "right" },
     { id: "education", title: "EDUCATION", type: "education", items: [
       { school: "University Name", degree: "BSCS, COMPUTER SCIENCE", from: "2019", to: "2023" }
