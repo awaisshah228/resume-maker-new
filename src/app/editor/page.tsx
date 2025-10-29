@@ -81,7 +81,7 @@ export default function EditorPage() {
   const [showPhoto, setShowPhoto] = useState(true);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [theme, setTheme] = useState<{ name: string; color: string }>(
-    { name: "blue", color: "#2563eb" }
+    { name: "blue", color: "#234795" }
   );
   const [name, setName] = useState("Your Name");
   const [role, setRole] = useState("Your Role");
@@ -276,17 +276,31 @@ export default function EditorPage() {
   const exportPdf = async () => {
     if (!previewRef.current) return;
     try {
+      // Add a class to hide interactive elements
+      previewRef.current.classList.add('print-mode');
+      
       // Use html-to-image which handles modern CSS better
       const dataUrl = await toPng(previewRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        filter: (node) => {
+          // Filter out buttons and interactive controls
+          if (node.nodeType === 1) {
+            const element = node as Element;
+            // Skip buttons
+            if (element.tagName === 'BUTTON') return false;
+            // Skip file inputs
+            if (element.tagName === 'INPUT' && element.getAttribute('type') === 'file') return false;
+            // Skip ItemControls elements (they have opacity-0 and group-hover:opacity-100)
+            if (element.classList?.contains('opacity-0') || element.classList?.contains('group-hover:opacity-100')) return false;
+          }
+          return true;
+        }
       });
       
-      // Create PDF from the image
-      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      // Remove the print mode class
+      previewRef.current.classList.remove('print-mode');
       
       // Create an image to get dimensions
       const img = new Image();
@@ -295,13 +309,28 @@ export default function EditorPage() {
         img.onload = resolve;
       });
       
-      const imgWidth = pageWidth - 64;
+      // Calculate dimensions based on content
+      const margin = 32; // margin in points
+      const a4Width = 595; // A4 width in points
+      const maxWidth = a4Width - (margin * 2);
+      
+      // Calculate the scaled dimensions
+      const imgWidth = maxWidth;
       const imgHeight = (img.height * imgWidth) / img.width;
       
-      pdf.addImage(dataUrl, "PNG", 32, 32, imgWidth, imgHeight);
+      // Create PDF with custom height to fit content exactly
+      const pdfHeight = imgHeight + (margin * 2);
+      const pdf = new jsPDF({ 
+        orientation: "p", 
+        unit: "pt", 
+        format: [a4Width, pdfHeight] // Custom size based on content
+      });
+      
+      pdf.addImage(dataUrl, "PNG", margin, margin, imgWidth, imgHeight);
       pdf.save("resume.pdf");
     } catch (error) {
       console.error("PDF export error:", error);
+      previewRef.current?.classList.remove('print-mode');
       alert("There was an error generating the PDF. Please try again.");
     }
   };
@@ -365,7 +394,7 @@ export default function EditorPage() {
               <Label className="text-xs text-muted-foreground mb-2">Preset Colors</Label>
               <div className="grid grid-cols-5 gap-2">
                 {[
-                  { name: "blue", color: "#2563eb" },
+                  { name: "blue", color: "#234795" },
                   { name: "pink", color: "#c026d3" },
                   { name: "green", color: "#16a34a" },
                   { name: "orange", color: "#ea580c" },
