@@ -14,7 +14,7 @@ import { ItemControls } from "@/components/editor/ItemControls";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs as UITabs, TabsList as UITabsList, TabsTrigger as UITabsTrigger, TabsContent as UITabsContent } from "@/components/ui/tabs";
 import { useRef, useState, useEffect } from "react";
-import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline } from "lucide-react";
+import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline, Sparkles } from "lucide-react";
 import { toPng } from 'html-to-image';
 import jsPDF from "jspdf";
 import Timeline from '@mui/lab/Timeline';
@@ -77,6 +77,7 @@ export default function EditorPage() {
   const [dragState, setDragState] = useState<{ kind: "exp" | "edu" | "list" | "skill" | null; sectionId?: string; from: number } | null>(null);
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
+  const [isFixingGrammar, setIsFixingGrammar] = useState(false);
   const [layout, setLayout] = useState<"split" | "classic" | "hybrid">("split");
   const [font, setFont] = useState("Nunito");
   const [size, setSize] = useState<"sm" | "md" | "lg">("md");
@@ -104,6 +105,42 @@ export default function EditorPage() {
     document.execCommand(command, false);
   };
 
+  // Fix grammar and spelling
+  const fixGrammar = async () => {
+    const selection = window.getSelection();
+    if (!selection || selection.toString().length === 0) return;
+
+    const selectedText = selection.toString();
+    setIsFixingGrammar(true);
+
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          kind: "grammar", 
+          input: selectedText 
+        })
+      });
+      const data = await res.json();
+      const fixedText = String(data.text ?? selectedText);
+
+      // Replace the selected text with the fixed version
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(document.createTextNode(fixedText));
+
+      // Clear selection
+      selection.removeAllRanges();
+      setShowFormatToolbar(false);
+    } catch (error) {
+      console.error("Grammar fix error:", error);
+      alert("Failed to fix grammar. Please try again.");
+    } finally {
+      setIsFixingGrammar(false);
+    }
+  };
+
   // Handle text selection for formatting toolbar
   useEffect(() => {
     const handleSelection = () => {
@@ -112,12 +149,20 @@ export default function EditorPage() {
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
         
-        // Position toolbar above the selection
-        setToolbarPosition({
-          top: rect.top + window.scrollY - 50,
-          left: rect.left + window.scrollX + (rect.width / 2) - 75
-        });
-        setShowFormatToolbar(true);
+        // Check if selection is within an editable element
+        const container = selection.anchorNode?.parentElement;
+        const isInEditableArea = container?.isContentEditable || container?.closest('[contenteditable="true"]');
+        
+        if (isInEditableArea) {
+          // Position toolbar above the selection using viewport coordinates
+          setToolbarPosition({
+            top: rect.top - 50,
+            left: rect.left + (rect.width / 2)
+          });
+          setShowFormatToolbar(true);
+        } else {
+          setShowFormatToolbar(false);
+        }
       } else {
         setShowFormatToolbar(false);
       }
@@ -461,6 +506,19 @@ export default function EditorPage() {
             title="Underline (Ctrl+U)"
           >
             <Underline className="w-4 h-4" />
+          </button>
+          <div className="w-px bg-gray-300 mx-1" />
+          <button
+            onClick={fixGrammar}
+            disabled={isFixingGrammar}
+            className="p-2 hover:bg-purple-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Fix Grammar & Spelling"
+          >
+            {isFixingGrammar ? (
+              <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-purple-600" />
+            )}
           </button>
         </div>
       )}

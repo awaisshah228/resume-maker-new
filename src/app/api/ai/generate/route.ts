@@ -17,6 +17,8 @@ export async function POST(req: NextRequest) {
         ? "You generate strong resume bullets. Return 4-8 bullet lines separated by newlines."
         : kind === "skills"
         ? "You generate a comma-separated list of skills tailored to the role."
+        : kind === "grammar"
+        ? "You are a grammar and spelling checker. Fix any grammar, spelling, or punctuation errors in the given text. Return ONLY the corrected text, maintaining the original tone and style. Do not add explanations or change the meaning."
         : "Assist with resume text.";
 
     const res = await model.invoke([
