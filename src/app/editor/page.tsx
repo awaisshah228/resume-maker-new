@@ -370,9 +370,12 @@ export default function EditorPage() {
   };
 
   const toggleSectionPlacement = (sectionId: string) => {
-    setSections(prev => prev.map(s => 
-      s.id === sectionId ? { ...s, placement: s.placement === "left" ? "right" : "left" } as typeof s : s
-    ));
+    setSections(prev => prev.map(s => {
+      if (s.id !== sectionId) return s;
+      // Only allow placement toggle for skills section
+      if (s.type !== "skills") return s;
+      return { ...s, placement: s.placement === "left" ? "right" : "left" } as typeof s;
+    }));
   };
 
   const addCustomLink = () => {
@@ -1061,7 +1064,7 @@ export default function EditorPage() {
                           )}
                           <ItemControls 
                             className="ml-2"
-                            onTogglePlacement={layout === "split" ? ()=> toggleSectionPlacement(s.id) : undefined}
+                            onTogglePlacement={layout === "split" && s.type === "skills" ? ()=> toggleSectionPlacement(s.id) : undefined}
                             placementLabel={s.placement}
                             onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                             onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
@@ -1151,7 +1154,7 @@ export default function EditorPage() {
                         )}
                         <ItemControls 
                           className="ml-2"
-                          onTogglePlacement={layout === "split" ? ()=> toggleSectionPlacement(s.id) : undefined}
+                          onTogglePlacement={layout === "split" && s.type === "skills" ? ()=> toggleSectionPlacement(s.id) : undefined}
                           placementLabel={s.placement}
                           onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                           onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
