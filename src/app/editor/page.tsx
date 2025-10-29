@@ -89,6 +89,7 @@ export default function EditorPage() {
     theme: { name: string; color: string };
     font: string;
     layout: "split" | "classic" | "hybrid";
+    nameNextToPhoto: boolean;
   }>(null);
   const [theme, setTheme] = useState<{ name: string; color: string }>(
     { name: "blue", color: "#234795" }
@@ -424,8 +425,10 @@ export default function EditorPage() {
         theme,
         font,
         layout,
+        nameNextToPhoto,
       });
       setShowPhoto(false);
+      setNameNextToPhoto(false);
       setTheme({ name: "black", color: "#111827" });
       setFont("Inter");
       setLayout("classic");
@@ -435,6 +438,7 @@ export default function EditorPage() {
       setTheme(savedBeforeAts.theme);
       setFont(savedBeforeAts.font);
       setLayout(savedBeforeAts.layout);
+      setNameNextToPhoto(savedBeforeAts.nameNextToPhoto);
       setSavedBeforeAts(null);
     }
   }, [atsMode]);
