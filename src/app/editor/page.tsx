@@ -46,6 +46,8 @@ type ExperienceItem = {
   from: string;
   to: string;
   bullets: string; // newline-separated
+  description?: string;
+  isPlaceholder?: boolean;
 };
 
 type ExperienceSection = BaseSection & {
@@ -58,6 +60,7 @@ type EducationItem = {
   degree: string;
   from: string;
   to: string;
+  isPlaceholder?: boolean;
 };
 
 type EducationSection = BaseSection & {
@@ -213,6 +216,7 @@ export default function EditorPage() {
     location: true,
     email: true,
     phone: true,
+    jobDescription: true,
   });
 
   const [newSectionType, setNewSectionType] = useState<"text" | "list">("text");
@@ -229,7 +233,7 @@ export default function EditorPage() {
   const addExperienceItem = () => {
     setSections(prev => prev.map(s => s.type === "experience" ? {
       ...s,
-      items: [...s.items, { company: "Company", role: "Role", from: "From", to: "Until", bullets: "" }],
+      items: [...s.items, { company: "Company", role: "Role", from: "From", to: "Until", bullets: "", description: "Brief description of responsibilities and scope.", isPlaceholder: true }],
     } : s));
   };
 
@@ -243,7 +247,7 @@ export default function EditorPage() {
   const insertExperienceAfter = (index: number) => {
     setSections(prev => prev.map(s => s.type === "experience" ? {
       ...s,
-      items: s.items.toSpliced(index + 1, 0, { company: "Company", role: "Role", from: "From", to: "Until", bullets: "" }),
+      items: s.items.toSpliced(index + 1, 0, { company: "Company", role: "Role", from: "From", to: "Until", bullets: "", description: "Brief description of responsibilities and scope.", isPlaceholder: true }),
     } : s));
   };
 
@@ -269,7 +273,7 @@ export default function EditorPage() {
   const addEducationItem = () => {
     setSections(prev => prev.map(s => s.type === "education" ? {
       ...s,
-      items: [...s.items, { school: "School", degree: "Degree", from: "From", to: "Until" }],
+      items: [...s.items, { school: "School", degree: "Degree", from: "From", to: "Until", isPlaceholder: true }],
     } : s));
   };
 
@@ -283,7 +287,7 @@ export default function EditorPage() {
   const insertEducationAfter = (index: number) => {
     setSections(prev => prev.map(s => s.type === "education" ? ({
       ...s,
-      items: s.items.toSpliced(index + 1, 0, { school: "School", degree: "Degree", from: "From", to: "Until" })
+      items: s.items.toSpliced(index + 1, 0, { school: "School", degree: "Degree", from: "From", to: "Until", isPlaceholder: true })
     }) : s));
   };
 
@@ -405,8 +409,9 @@ export default function EditorPage() {
     setCustomLinks(prev => prev.filter(link => link.id !== id));
   };
 
+  type IconComponent = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number; className?: string }>;
   const getIconComponent = (iconName: string) => {
-    const icons: Record<string, any> = {
+    const icons: Record<string, IconComponent> = {
       globe: Globe,
       linkedin: Linkedin,
       link: LinkIcon,
@@ -721,6 +726,10 @@ export default function EditorPage() {
                 </div>
               ))}
               <div className="flex items-center justify-between gap-2 col-span-2">
+                <span className="text-sm">Show job description</span>
+                <Switch checked={!!visible.jobDescription} onCheckedChange={(v)=> setVisible(s=> ({...s, jobDescription: !!v}))} />
+              </div>
+              <div className="flex items-center justify-between gap-2 col-span-2">
                 <span className="text-sm">Name next to photo</span>
                 <Switch checked={nameNextToPhoto} onCheckedChange={(v)=> setNameNextToPhoto(!!v)} />
               </div>
@@ -863,9 +872,12 @@ export default function EditorPage() {
                   <Textarea id="ai-ats-jd" placeholder="Paste the target job description..." />
                   <Button onClick={async()=>{
                     const jd = (document.getElementById("ai-ats-jd") as HTMLTextAreaElement)?.value;
-                    const currentSummary = (sections.find(s=> s.id==="about" && s.type==="text") as any)?.content ?? "";
-                    const currentSkills = (sections.find(s=> s.id==="skills" && s.type==="skills") as any)?.skills?.join(", ") ?? "";
-                    const exp = (sections.find(s=> s.type==="experience") as any)?.items?.[0];
+                    const aboutSection = sections.find(s=> s.id==="about" && s.type==="text") as TextSection | undefined;
+                    const skillsSection = sections.find(s=> s.id==="skills" && s.type==="skills") as SkillsSection | undefined;
+                    const experienceSection = sections.find(s=> s.type==="experience") as ExperienceSection | undefined;
+                    const currentSummary = aboutSection?.content ?? "";
+                    const currentSkills = skillsSection?.skills?.join(", ") ?? "";
+                    const exp = experienceSection?.items?.[0];
                     const expBlock = exp ? `${exp.company} | ${exp.role} | ${exp.from}-${exp.to}\n${exp.bullets}` : "";
                     const payload = [
                       "JOB_DESCRIPTION:\n"+ (jd||""),
@@ -1289,11 +1301,11 @@ export default function EditorPage() {
                                 <div className="relative">
                                   <div className="flex items-start justify-between gap-4 mb-1">
                                     <span
-                                      className="outline-none font-bold"
+                                      className={`outline-none ${it.isPlaceholder ? "" : "font-bold"}`}
                                       style={{ color: theme.color }}
                                       contentEditable
                                       suppressContentEditableWarning
-                                      onBlur={(e)=> updateExperienceItem(i,{company: (e.target as HTMLElement).innerText})}
+                                      onBlur={(e)=> updateExperienceItem(i,{company: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                     >{it.company}</span>
                                     <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
                                       <span
@@ -1312,16 +1324,24 @@ export default function EditorPage() {
                                     </div>
                                   </div>
                                   <div
-                                    className="outline-none font-semibold text-gray-800 mb-2"
+                                    className={`outline-none ${it.isPlaceholder ? "" : "font-semibold"} text-gray-800 mb-2`}
                                     contentEditable
                                     suppressContentEditableWarning
-                                    onBlur={(e)=> updateExperienceItem(i,{role: (e.target as HTMLElement).innerText})}
+                                    onBlur={(e)=> updateExperienceItem(i,{role: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                   >{it.role}</div>
+                                  {visible.jobDescription !== false && (
+                                    <div
+                                      className="text-sm text-gray-500 leading-relaxed outline-none"
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e)=> updateExperienceItem(i,{description: (e.target as HTMLElement).innerText, isPlaceholder: false})}
+                                    >{it.description ?? "Brief description of responsibilities and scope."}</div>
+                                  )}
                                   <div
                                     className="text-sm leading-relaxed whitespace-pre-wrap outline-none text-gray-700"
                                     contentEditable
                                     suppressContentEditableWarning
-                                    onBlur={(e)=> updateExperienceItem(i,{bullets: (e.target as HTMLElement).innerText})}
+                                    onBlur={(e)=> updateExperienceItem(i,{bullets: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                   >{it.bullets}</div>
                                   <ItemControls
                                     className="right-0 -top-6"
@@ -1359,11 +1379,11 @@ export default function EditorPage() {
                                 <div className="relative">
                                   <div className="flex items-start justify-between gap-4 mb-1">
                                     <span
-                                      className="font-bold outline-none"
+                                      className={`outline-none ${ed.isPlaceholder ? "" : "font-bold"}`}
                                       style={{ color: theme.color }}
                                       contentEditable
                                       suppressContentEditableWarning
-                                      onBlur={(e)=> updateEducationItem(i,{school: (e.target as HTMLElement).innerText})}
+                                      onBlur={(e)=> updateEducationItem(i,{school: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                     >{ed.school}</span>
                                     <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
                                       <span
@@ -1381,10 +1401,10 @@ export default function EditorPage() {
                                     </div>
                                   </div>
                                   <div
-                                    className="outline-none font-semibold text-gray-800"
+                                    className={`outline-none ${ed.isPlaceholder ? "" : "font-semibold"} text-gray-800`}
                                     contentEditable
                                     suppressContentEditableWarning
-                                    onBlur={(e)=> updateEducationItem(i,{degree: (e.target as HTMLElement).innerText})}
+                                    onBlur={(e)=> updateEducationItem(i,{degree: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                   >{ed.degree}</div>
                                   <ItemControls
                                     className="right-0 -top-6"
