@@ -18,7 +18,7 @@ import { MapPin, Mail, Phone, Globe, Linkedin, Bold, Italic, Underline, Sparkles
 import { toPng } from 'html-to-image';
 import jsPDF from "jspdf";
 import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
@@ -1188,7 +1188,7 @@ export default function EditorPage() {
                           ))}
                         </ul>
                       ) : s.type === "experience" ? (
-                        <Timeline style={{ padding: 0, margin: 0 }}>
+                        <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                           {s.items.map((it, i)=> (
                             <TimelineItem
                               key={i}
@@ -1258,7 +1258,7 @@ export default function EditorPage() {
                           ))}
                         </Timeline>
                       ) : s.type === "education" ? (
-                        <Timeline style={{ padding: 0, margin: 0 }}>
+                        <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                           {s.items.map((ed, i)=>(
                             <TimelineItem
                               key={i}
@@ -1410,7 +1410,7 @@ export default function EditorPage() {
                         ))}
                       </ul>
                     ) : s.type === "experience" ? (
-                      <Timeline sx={{ padding: 0, margin: 0 }}>
+                      <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                         {s.items.map((it, i)=> (
                           <TimelineItem
                             key={i}
@@ -1480,7 +1480,7 @@ export default function EditorPage() {
                         ))}
                       </Timeline>
                     ) : s.type === "education" ? (
-                      <Timeline sx={{ padding: 0, margin: 0 }}>
+                      <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                         {s.items.map((ed, i)=>(
                           <TimelineItem
                             key={i}
@@ -1631,7 +1631,7 @@ export default function EditorPage() {
                         ))}
                       </ul>
                     ) : s.type === "experience" ? (
-                      <Timeline style={{ padding: 0, margin: 0 }}>
+                      <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                         {s.items.map((it, i)=> (
                           <TimelineItem
                             key={i}
@@ -1701,7 +1701,7 @@ export default function EditorPage() {
                         ))}
                       </Timeline>
                     ) : s.type === "education" ? (
-                      <Timeline style={{ padding: 0, margin: 0 }}>
+                      <Timeline sx={{ padding: 0, margin: 0, [`& .${timelineItemClasses.root}:before`]: { flex: 0, padding: 0 } }}>
                         {s.items.map((ed, i)=>(
                           <TimelineItem
                             key={i}
