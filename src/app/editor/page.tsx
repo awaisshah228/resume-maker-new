@@ -273,6 +273,25 @@ export default function EditorPage() {
     }));
   };
 
+  // Section-level operations
+  const moveSection = (sectionId: string, direction: -1 | 1) => {
+    setSections(prev => {
+      const index = prev.findIndex(s => s.id === sectionId);
+      if (index === -1) return prev;
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(index, 1);
+      next.splice(newIndex, 0, moved);
+      return next;
+    });
+  };
+
+  const removeSection = (sectionId: string) => {
+    setSections(prev => prev.filter(s => s.id !== sectionId));
+    setVisible(prev => ({ ...prev, [sectionId]: false }));
+  };
+
   const exportPdf = async () => {
     if (!previewRef.current) return;
     try {
@@ -608,7 +627,7 @@ export default function EditorPage() {
 
         <div className="rounded-xl p-8 shadow-2xl" style={{ backgroundColor: hexToRgba(theme.color, 0.08) }}>
           <div className="border-2 rounded-lg p-12 bg-white shadow-lg" ref={previewRef} style={{ borderColor: hexToRgba(theme.color, 0.12) }}>
-          <div className="grid gap-8" style={{ fontFamily: font, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
+          <div className="grid gap-8" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
             {visible.picture && showPhoto ? (
               <div className="relative group">
                 {photoUrl ? (
@@ -675,24 +694,30 @@ export default function EditorPage() {
             {layout === "split" ? (
               <div className="grid grid-cols-3 gap-10">
                 <div className="col-span-1 space-y-8">
-                  {sections.filter(s=> visible[s.id] !== false && s.placement === "left").map(s => (
-                    <section key={s.id} className="space-y-3 group">
+                  {sections.filter(s=> visible[s.id] !== false && s.placement === "left").map((s, idx, arr) => (
+                    <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                       <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
                         <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
-                        {s.type === "list" && (
-                          <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
-                        )}
-                        {s.type === "experience" && (
-                          <ItemControls onInsertAfter={()=> addExperienceItem()} />
-                        )}
-                        {s.type === "education" && (
-                          <ItemControls onInsertAfter={()=> addEducationItem()} />
-                        )}
-                        {s.type === "skills" && (
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {s.type === "list" && (
+                            <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
+                          )}
+                          {s.type === "experience" && (
+                            <ItemControls onInsertAfter={()=> addExperienceItem()} />
+                          )}
+                          {s.type === "education" && (
+                            <ItemControls onInsertAfter={()=> addEducationItem()} />
+                          )}
+                          {s.type === "skills" && (
                             <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
-                          </div>
-                        )}
+                          )}
+                          <ItemControls 
+                            className="ml-2"
+                            onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
+                            onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
+                            onRemove={()=> removeSection(s.id)}
+                          />
+                        </div>
                       </div>
                       {s.type === "list" ? (
                         <ul className="space-y-2 text-sm">
@@ -757,22 +782,30 @@ export default function EditorPage() {
                   ))}
                 </div>
                 <div className="col-span-2 space-y-8">
-                  {sections.filter(s=> visible[s.id] !== false && s.placement === "right").map(s => (
-                    <section key={s.id} className="space-y-3">
+                  {sections.filter(s=> visible[s.id] !== false && s.placement === "right").map((s, idx, arr) => (
+                    <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
                       <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
-                      {s.type === "list" && (
-                        <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
-                      )}
-                      {s.type === "experience" && (
-                        <ItemControls onInsertAfter={()=> addExperienceItem()} />
-                      )}
-                      {s.type === "education" && (
-                        <ItemControls onInsertAfter={()=> addEducationItem()} />
-                      )}
-                      {s.type === "skills" && (
-                        <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {s.type === "list" && (
+                          <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
+                        )}
+                        {s.type === "experience" && (
+                          <ItemControls onInsertAfter={()=> addExperienceItem()} />
+                        )}
+                        {s.type === "education" && (
+                          <ItemControls onInsertAfter={()=> addEducationItem()} />
+                        )}
+                        {s.type === "skills" && (
+                          <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
+                        )}
+                        <ItemControls 
+                          className="ml-2"
+                          onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
+                          onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
+                          onRemove={()=> removeSection(s.id)}
+                        />
+                      </div>
                     </div>
                       {s.type === "list" ? (
                         <ul className="space-y-2 text-sm">
@@ -948,22 +981,30 @@ export default function EditorPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {sections.filter(s=> visible[s.id] !== false).map(s => (
-                  <section key={s.id} className="space-y-3 group">
+                {sections.filter(s=> visible[s.id] !== false).map((s, idx, arr) => (
+                  <section key={s.id} className="space-y-3 group relative p-3 -m-3 rounded-lg border-2 border-transparent hover:border-dashed hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-200">
                     <div className="flex items-center justify-between border-b-2 pb-2" style={{ borderColor: theme.color }}>
                       <h2 className="text-base font-bold uppercase tracking-wide" style={{ color: theme.color }}>{s.title}</h2>
-                      {s.type === "list" && (
-                        <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
-                      )}
-                      {s.type === "experience" && (
-                        <ItemControls onInsertAfter={()=> addExperienceItem()} />
-                      )}
-                      {s.type === "education" && (
-                        <ItemControls onInsertAfter={()=> addEducationItem()} />
-                      )}
-                      {s.type === "skills" && (
-                        <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {s.type === "list" && (
+                          <ItemControls onInsertAfter={()=> insertListLineAfter(s.id, -1)} />
+                        )}
+                        {s.type === "experience" && (
+                          <ItemControls onInsertAfter={()=> addExperienceItem()} />
+                        )}
+                        {s.type === "education" && (
+                          <ItemControls onInsertAfter={()=> addEducationItem()} />
+                        )}
+                        {s.type === "skills" && (
+                          <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
+                        )}
+                        <ItemControls 
+                          className="ml-2"
+                          onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
+                          onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
+                          onRemove={()=> removeSection(s.id)}
+                        />
+                      </div>
                     </div>
                     {s.type === "list" ? (
                       <ul className="space-y-2 text-sm">
