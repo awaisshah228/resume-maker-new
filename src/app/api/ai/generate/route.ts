@@ -3,13 +3,23 @@ import { ChatOpenAI } from "@langchain/openai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { kind, input } = await req.json();
+    const { kind, input, prompt } = await req.json();
     const model = new ChatOpenAI({
       modelName: "gpt-4o-mini",
       apiKey: process.env.OPENAI_API_KEY,
       temperature: 0.4,
     });
 
+    // If prompt is provided directly (for AI text enhancement), use it
+    if (prompt) {
+      const res = await model.invoke([
+        ["system", "You are a helpful assistant that improves resume text. Return only the improved text without explanations."],
+        ["user", prompt]
+      ]);
+      return NextResponse.json({ text: res.content });
+    }
+
+    // Otherwise, use the original kind-based system
     const system =
       kind === "summary"
         ? "You generate concise resume summaries. Output 2-4 sentences."

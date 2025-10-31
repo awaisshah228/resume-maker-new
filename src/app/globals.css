@@ -120,3 +120,131 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* GrapesJS Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Hide or minimize panels on mobile */
+  .gjs-pn-panels {
+    flex-wrap: wrap;
+  }
+  
+  .gjs-pn-panel {
+    min-width: auto !important;
+    flex: 1 1 auto;
+  }
+  
+  /* Make canvas full width on mobile */
+  .gjs-cv-canvas {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Responsive blocks panel */
+  .gjs-blocks-c {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Stack panels vertically on mobile */
+  .gjs-pn-panel.gjs-pn-views-container,
+  .gjs-pn-panel.gjs-pn-views {
+    width: 100% !important;
+  }
+  
+  /* Make toolbar buttons smaller */
+  .gjs-pn-btn {
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Responsive device switcher */
+  .gjs-pn-devices-c {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even smaller adjustments for phones */
+  .gjs-pn-panel {
+    padding: 8px !important;
+  }
+  
+  .gjs-blocks-c {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  
+  /* Hide some panels on very small screens */
+  .gjs-pn-panel.gjs-pn-views-container {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+}
+
+/* Make GrapesJS panels responsive */
+.gjs-pn-panels {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.gjs-pn-views-container {
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .gjs-pn-panels {
+    flex-direction: column;
+  }
+  
+  .gjs-pn-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Mobile scrolling fix */
+@media (max-width: 768px) {
+  .gjs-cv-canvas {
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .gjs-cv-canvas iframe {
+    width: 100% !important;
+  }
+  
+  /* Ensure controls are touchable */
+  .gjs-toolbar-item,
+  .gjs-badge {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Fix toolbar positioning on mobile - prevent it from hiding content */
+  .gjs-toolbar {
+    position: fixed !important;
+    bottom: 20px !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+    max-width: calc(100vw - 40px) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  /* Alternative: Position toolbar at the top but with proper spacing */
+  .gjs-toolbar.gjs-toolbar-top {
+    position: fixed !important;
+    top: 60px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: auto !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  
+  /* Add padding to canvas content on mobile to prevent toolbar overlap */
+  .gjs-cv-canvas iframe body {
+    padding-top: 60px !important;
+  }
+}
