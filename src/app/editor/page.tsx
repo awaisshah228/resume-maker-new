@@ -23,6 +23,7 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
+import { useResumeStore } from "@/store/resumeStore";
 
 type BaseSection = {
   id: string;
@@ -81,12 +82,7 @@ export default function EditorPage() {
   const [showFormatToolbar, setShowFormatToolbar] = useState(false);
   const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 });
   const [isFixingGrammar, setIsFixingGrammar] = useState(false);
-  const [layout, setLayout] = useState<"split" | "classic" | "hybrid">("split");
-  const [font, setFont] = useState("Nunito");
-  const [size, setSize] = useState<"sm" | "md" | "lg">("md");
-  const [showPhoto, setShowPhoto] = useState(true);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [atsMode, setAtsMode] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [savedBeforeAts, setSavedBeforeAts] = useState<null | {
     showPhoto: boolean;
     theme: { name: string; color: string };
@@ -94,16 +90,72 @@ export default function EditorPage() {
     layout: "split" | "classic" | "hybrid";
     nameNextToPhoto: boolean;
   }>(null);
-  const [theme, setTheme] = useState<{ name: string; color: string }>(
-    { name: "blue", color: "#234795" }
-  );
-  const [name, setName] = useState("Your Name");
-  const [role, setRole] = useState("Your Role");
-  const [location, setLocation] = useState("City");
-  const [email, setEmail] = useState("you@email.com");
-  const [phone, setPhone] = useState("+123456789");
-  const [customLinks, setCustomLinks] = useState<{ id: string; label: string; url: string; icon: string }[]>([]);
-  const [nameNextToPhoto, setNameNextToPhoto] = useState(true);
+  
+  // Zustand store
+  const {
+    name, setName,
+    role, setRole,
+    location, setLocation,
+    email, setEmail,
+    phone, setPhone,
+    photoUrl, setPhotoUrl,
+    customLinks, setCustomLinks,
+    sections, setSections,
+    visible, setVisible,
+    layout, setLayout,
+    font, setFont,
+    size, setSize,
+    theme, setTheme,
+    showPhoto, setShowPhoto,
+    nameNextToPhoto, setNameNextToPhoto,
+    atsMode, setAtsMode,
+  } = useResumeStore();
+
+  // Manual save function
+  const handleSave = () => {
+    if (typeof window !== 'undefined') {
+      // Get current state from store
+      const currentState = useResumeStore.getState();
+      // Manually save to localStorage (Zustand persist format)
+      const dataToSave = {
+        state: {
+          name: currentState.name,
+          role: currentState.role,
+          location: currentState.location,
+          email: currentState.email,
+          phone: currentState.phone,
+          photoUrl: currentState.photoUrl,
+          customLinks: currentState.customLinks,
+          sections: currentState.sections,
+          visible: currentState.visible,
+          layout: currentState.layout,
+          font: currentState.font,
+          size: currentState.size,
+          theme: currentState.theme,
+          showPhoto: currentState.showPhoto,
+          nameNextToPhoto: currentState.nameNextToPhoto,
+          atsMode: currentState.atsMode,
+        },
+        version: 1,
+      };
+      try {
+        localStorage.setItem('resume-maker-storage', JSON.stringify(dataToSave));
+        setLastSaved(new Date());
+        console.log('✅ Resume saved to localStorage');
+      } catch (error) {
+        console.error('❌ Failed to save to localStorage:', error);
+        alert('Failed to save. Please check your browser settings.');
+      }
+    }
+  };
+
+  // Auto-save on changes (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000); // Save 1 second after last change
+    return () => clearTimeout(timer);
+  }, [name, role, location, email, phone, photoUrl, customLinks, sections, visible, layout, font, size, theme, showPhoto, nameNextToPhoto, atsMode]);
   
   // Helper function to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -195,31 +247,6 @@ export default function EditorPage() {
       reader.readAsDataURL(file);
     }
   };
-
-  const [sections, setSections] = useState<ResumeSection[]>([
-    { id: "about", title: "ABOUT ME", type: "text", content: "Experienced full-stack blockchain developer with a focus on microservices architecture and DeFi in Blockchain, currently exploring Web3 and Defi in various chains and tools. Skilled in MERN, Aws, GCP and Web3, with a passion for innovation and learning.", placement: "left" },
-    { id: "work", title: "EXPERIENCE", type: "experience", items: [
-      { company: "Company Name", role: "FULL STACK DEVELOPER", from: "June 2023", to: "Present (11 months)", bullets: ""},
-      { company: "Previous Company", role: "SOFTWARE ENGINEER", from: "Jan 2021", to: "May 2023", bullets: ""}
-    ], placement: "right" },
-    { id: "education", title: "EDUCATION", type: "education", items: [
-      { school: "University Name", degree: "BSCS, COMPUTER SCIENCE", from: "2019", to: "2023" },
-      { school: "Previous School", degree: "DEGREE NAME", from: "2015", to: "2019" }
-    ], placement: "right" },
-    { id: "skills", title: "SKILLS", type: "skills", skills: ["React.Next", "Node.js", "TypeScript", "AWS", "Docker"], placement: "right" },
-  ]);
-
-  const [visible, setVisible] = useState<Record<string, boolean>>({
-    picture: true,
-    about: true,
-    work: true,
-    education: true,
-    skills: true,
-    location: true,
-    email: true,
-    phone: true,
-    jobDescription: true,
-  });
 
   const [newSectionType, setNewSectionType] = useState<"text" | "list">("text");
   const [newSectionPlacement, setNewSectionPlacement] = useState<"left" | "right">("right");
@@ -939,7 +966,19 @@ export default function EditorPage() {
           <div className="text-sm font-medium text-white bg-black/20 px-4 py-2 rounded-lg">
             Layout: {layout} · Font: {font} · Size: {size}
           </div>
-          <div className="space-x-2">
+          <div className="space-x-2 flex items-center gap-2">
+            {lastSaved && (
+              <span className="text-xs text-white/70">
+                Saved {lastSaved.toLocaleTimeString()}
+              </span>
+            )}
+            <Button 
+              onClick={handleSave} 
+              variant="secondary"
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              💾 Save
+            </Button>
             <Button variant="secondary">Preview</Button>
             <Button onClick={exportPdf}>Download PDF</Button>
           </div>
