@@ -946,7 +946,7 @@ export default function EditorPage() {
         </div>
 
         <div className="rounded-xl  overflow-visible" style={{ backgroundColor: '#3b82f6' }}>
-          <div className="rounded-lg p-12 bg-white shadow-lg overflow-visible min-h-[1123px]" ref={previewRef} style={{ height: '1123px' }}>
+          <div className="rounded-lg p-12 bg-white shadow-lg overflow-visible min-h-[1123px]" ref={previewRef}>
           <div className="grid gap-8 overflow-visible" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
             {nameNextToPhoto && visible.picture && showPhoto ? (
               <header className="flex items-center gap-6">
@@ -1180,7 +1180,8 @@ export default function EditorPage() {
                             <Button size="sm" variant="secondary" className="relative z-20" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
                           )}
                           <ItemControls 
-                            className="ml-2"
+                            className="right-2 top-0"
+                            hideOnInputFocus={true}
                             onTogglePlacement={layout === "split" && s.type === "skills" ? ()=> toggleSectionPlacement(s.id) : undefined}
                             placementLabel={s.placement}
                             onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
@@ -1279,7 +1280,8 @@ export default function EditorPage() {
                           <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
                         )}
                         <ItemControls 
-                          className="ml-2"
+                          className="right-2 top-0"
+                          hideOnInputFocus={true}
                           onTogglePlacement={layout === "split" && s.type === "skills" ? ()=> toggleSectionPlacement(s.id) : undefined}
                           placementLabel={s.placement}
                           onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
@@ -1406,7 +1408,7 @@ export default function EditorPage() {
                                     ))}
                                   </div>
                                   <ItemControls
-                                    className="right-0 -top-6"
+                                    className="right-0 top-8"
                                     onAi={() => aiBulletsForExperience(i)}
                                     onMoveUp={() => moveExperience(i,-1)}
                                     onMoveDown={() => moveExperience(i,1)}
@@ -1486,7 +1488,7 @@ export default function EditorPage() {
                                     onBlur={(e)=> updateEducationItem(i,{degree: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                   >{ed.degree}</div>
                                   <ItemControls
-                                    className="right-0 -top-6"
+                                    className="right-0 top-6"
                                     onMoveUp={() => moveEducation(i,-1)}
                                     onMoveDown={() => moveEducation(i,1)}
                                     onInsertAfter={() => insertEducationAfter(i)}
@@ -1561,7 +1563,8 @@ export default function EditorPage() {
                           <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
                         )}
                         <ItemControls 
-                          className="ml-2"
+                          className="right-2 top-0"
+                          hideOnInputFocus={true}
                           onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                           onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
                           onRemove={()=> removeSection(s.id)}
@@ -1791,7 +1794,8 @@ export default function EditorPage() {
                           <Button size="sm" variant="secondary" onClick={()=> addSkill("New skill")}>＋ Add skill</Button>
                         )}
                         <ItemControls 
-                          className="ml-2"
+                          className="right-2 top-0"
+                          hideOnInputFocus={true}
                           onMoveUp={idx > 0 ? ()=> moveSection(s.id, -1) : undefined}
                           onMoveDown={idx < arr.length - 1 ? ()=> moveSection(s.id, 1) : undefined}
                           onRemove={()=> removeSection(s.id)}
