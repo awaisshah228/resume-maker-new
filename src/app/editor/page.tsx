@@ -199,10 +199,12 @@ export default function EditorPage() {
   const [sections, setSections] = useState<ResumeSection[]>([
     { id: "about", title: "ABOUT ME", type: "text", content: "Experienced full-stack blockchain developer with a focus on microservices architecture and DeFi in Blockchain, currently exploring Web3 and Defi in various chains and tools. Skilled in MERN, Aws, GCP and Web3, with a passion for innovation and learning.", placement: "left" },
     { id: "work", title: "EXPERIENCE", type: "experience", items: [
-      { company: "Company Name", role: "FULL STACK DEVELOPER", from: "June 2023", to: "Present (11 months)", bullets: ""}
+      { company: "Company Name", role: "FULL STACK DEVELOPER", from: "June 2023", to: "Present (11 months)", bullets: ""},
+      { company: "Previous Company", role: "SOFTWARE ENGINEER", from: "Jan 2021", to: "May 2023", bullets: ""}
     ], placement: "right" },
     { id: "education", title: "EDUCATION", type: "education", items: [
-      { school: "University Name", degree: "BSCS, COMPUTER SCIENCE", from: "2019", to: "2023" }
+      { school: "University Name", degree: "BSCS, COMPUTER SCIENCE", from: "2019", to: "2023" },
+      { school: "Previous School", degree: "DEGREE NAME", from: "2015", to: "2019" }
     ], placement: "right" },
     { id: "skills", title: "SKILLS", type: "skills", skills: ["React.Next", "Node.js", "TypeScript", "AWS", "Docker"], placement: "right" },
   ]);
@@ -562,7 +564,7 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-linear-to-br from-gray-50 to-gray-100 flex flex-col">
+    <div className="min-h-dvh flex flex-col" style={{ backgroundColor: '#3b82f6' }}>
       {/* Floating Text Formatting Toolbar */}
       {showFormatToolbar && (
         <div 
@@ -611,11 +613,20 @@ export default function EditorPage() {
       )}
 
       {/* Top toolbar */}
-      <div className="flex items-center gap-4 px-4 py-2 border-b bg-background">
-        <div className="font-semibold">ResumeMaker.Online</div>
+      <div className="flex items-center gap-4 px-6 py-3 bg-black text-white sticky top-0 z-50 shadow-lg">
+        <div className="font-bold text-lg flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          AI Resume Builder
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Color</Button>
+            <Button variant="ghost" className="text-white hover:bg-gray-800">Color</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-40 p-3 space-y-3">
             <div>
@@ -662,7 +673,7 @@ export default function EditorPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Layout</Button>
+            <Button variant="ghost" className="text-white hover:bg-gray-800">Layout</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80">
             <DropdownMenuLabel>Choose layout</DropdownMenuLabel>
@@ -679,7 +690,7 @@ export default function EditorPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Typography</Button>
+            <Button variant="ghost" className="text-white hover:bg-gray-800">Typography</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80 space-y-3 p-3">
             <div className="space-y-2">
@@ -710,11 +721,11 @@ export default function EditorPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Sections</Button>
+            <Button variant="ghost" className="text-white hover:bg-gray-800">Sections</Button>
           </DropdownMenuTrigger>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost">Language</Button>
+            <Button variant="ghost" className="font-medium text-white hover:bg-gray-800">EN</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={()=> document.documentElement.lang = 'en'}>English</DropdownMenuItem>
@@ -826,14 +837,17 @@ export default function EditorPage() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="ml-auto space-x-2 flex items-center">
+        <div className="ml-auto space-x-3 flex items-center">
           <div className="flex items-center gap-2 text-sm">
             <span>ATS Mode</span>
             <Switch checked={atsMode} onCheckedChange={(v)=> setAtsMode(!!v)} />
           </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="secondary">AI Tools</Button>
+              <Button variant="secondary" className="font-semibold relative text-white bg-gray-800 hover:bg-gray-700">
+                AI Tools
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-bold bg-orange-500 text-white rounded">NEW</span>
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-xl">
               <DialogHeader>
@@ -916,13 +930,13 @@ export default function EditorPage() {
               </UITabs>
             </DialogContent>
           </Dialog>
-          <Button onClick={exportPdf}>Download PDF</Button>
+          <Button onClick={exportPdf} className="bg-orange-500 hover:bg-orange-600 text-white font-semibold">Download</Button>
         </div>
       </div>
 
       <main className="w-full max-w-4xl mx-auto p-6 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm font-medium text-white bg-black/20 px-4 py-2 rounded-lg">
             Layout: {layout} · Font: {font} · Size: {size}
           </div>
           <div className="space-x-2">
@@ -931,8 +945,8 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <div className="rounded-xl p-8 shadow-2xl overflow-visible" style={{ backgroundColor: hexToRgba(theme.color, 0.08) }}>
-          <div className="border-2 rounded-lg p-12 bg-white shadow-lg overflow-visible" ref={previewRef} style={{ borderColor: hexToRgba(theme.color, 0.12) }}>
+        <div className="rounded-xl  overflow-visible" style={{ backgroundColor: '#3b82f6' }}>
+          <div className="rounded-lg p-12 bg-white shadow-lg overflow-visible min-h-[1123px]" ref={previewRef} style={{ height: '1123px' }}>
           <div className="grid gap-8 overflow-visible" style={{ fontFamily: `var(--font-${font.toLowerCase().replace(' ', '-')}), ${font}, sans-serif`, fontSize: size==="sm"?"0.9rem":size==="lg"?"1.1rem":"1rem" }}>
             {nameNextToPhoto && visible.picture && showPhoto ? (
               <header className="flex items-center gap-6">
@@ -1311,27 +1325,44 @@ export default function EditorPage() {
                               className="group"
                             >
                               <TimelineSeparator>
-                                <TimelineDot style={{ backgroundColor: theme.color, margin: '12px 0' }} />
-                                {i < s.items.length - 1 && <TimelineConnector style={{ backgroundColor: hexToRgba(theme.color, 0.3) }} />}
+                                <TimelineDot 
+                                  sx={{ 
+                                    backgroundColor: theme.color, 
+                                    margin: '8px 0',
+                                    width: '10px',
+                                    height: '10px',
+                                    border: 'none',
+                                    boxShadow: 'none'
+                                  }} 
+                                />
+                                {i < s.items.length - 1 && (
+                                  <TimelineConnector 
+                                    sx={{ 
+                                      backgroundColor: hexToRgba(theme.color, 0.15),
+                                      width: '1px',
+                                      marginLeft: '4.5px'
+                                    }} 
+                                  />
+                                )}
                               </TimelineSeparator>
                               <TimelineContent
-                                sx={{ paddingTop: 0, paddingBottom: 3 }}
+                                sx={{ paddingTop: 0, paddingBottom: 4, paddingLeft: 2 }}
                                 className="cursor-move"
                                 draggable
                                 onDragStart={(e)=>{ setDragState({ kind: "exp", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
                                 onDragOver={(e)=> e.preventDefault()}
                                 onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "exp") { reorderExperience(from, i); } setDragState(null); }}
                               >
-                                <div className="relative">
-                                  <div className="flex items-start justify-between gap-4 mb-1">
+                                <div className="relative pl-3">
+                                  <div className="flex items-start justify-between gap-4 mb-2">
                                     <span
-                                      className={`outline-none ${it.isPlaceholder ? "" : "font-bold"}`}
+                                      className={`outline-none text-base ${it.isPlaceholder ? "" : "font-bold"}`}
                                       style={{ color: theme.color }}
                                       contentEditable
                                       suppressContentEditableWarning
                                       onBlur={(e)=> updateExperienceItem(i,{company: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                     >{it.company}</span>
-                                    <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
+                                    <div className="text-xs font-medium whitespace-nowrap px-2 py-1 rounded" style={{ backgroundColor: hexToRgba(theme.color, 0.08), color: theme.color }}>
                                       <span
                                         className="outline-none"
                                         contentEditable
@@ -1355,18 +1386,25 @@ export default function EditorPage() {
                                   >{it.role}</div>
                                   {visible.jobDescription !== false && (
                                     <div
-                                      className="text-sm text-gray-500 leading-relaxed outline-none"
+                                      className="text-sm text-gray-600 leading-relaxed outline-none mb-3 italic"
                                       contentEditable
                                       suppressContentEditableWarning
                                       onBlur={(e)=> updateExperienceItem(i,{description: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                     >{it.description ?? "Brief description of responsibilities and scope."}</div>
                                   )}
                                   <div
-                                    className="text-sm leading-relaxed whitespace-pre-wrap outline-none text-gray-700"
+                                    className="text-sm leading-relaxed whitespace-pre-wrap outline-none text-gray-700 space-y-1.5"
                                     contentEditable
                                     suppressContentEditableWarning
                                     onBlur={(e)=> updateExperienceItem(i,{bullets: (e.target as HTMLElement).innerText, isPlaceholder: false})}
-                                  >{it.bullets}</div>
+                                  >
+                                    {it.bullets.split('\n').filter(Boolean).map((bullet, idx) => (
+                                      <div key={idx} className="flex items-start gap-2">
+                                        <span style={{ color: theme.color, marginTop: '4px', fontSize: '10px' }}>•</span>
+                                        <span>{bullet}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                   <ItemControls
                                     className="right-0 -top-6"
                                     onAi={() => aiBulletsForExperience(i)}
@@ -1389,27 +1427,44 @@ export default function EditorPage() {
                               className="group"
                             >
                               <TimelineSeparator>
-                                <TimelineDot style={{ backgroundColor: theme.color, margin: '12px 0' }} />
-                                {i < s.items.length - 1 && <TimelineConnector style={{ backgroundColor: hexToRgba(theme.color, 0.3) }} />}
+                                <TimelineDot 
+                                  sx={{ 
+                                    backgroundColor: theme.color, 
+                                    margin: '8px 0',
+                                    width: '10px',
+                                    height: '10px',
+                                    border: 'none',
+                                    boxShadow: 'none'
+                                  }} 
+                                />
+                                {i < s.items.length - 1 && (
+                                  <TimelineConnector 
+                                    sx={{ 
+                                      backgroundColor: hexToRgba(theme.color, 0.15),
+                                      width: '1px',
+                                      marginLeft: '4.5px'
+                                    }} 
+                                  />
+                                )}
                               </TimelineSeparator>
                               <TimelineContent
-                                sx={{ paddingTop: 0, paddingBottom: 2 }}
+                                sx={{ paddingTop: 0, paddingBottom: 3, paddingLeft: 2 }}
                                 className="cursor-move text-sm"
                                 draggable
                                 onDragStart={(e)=>{ setDragState({ kind: "edu", from: i }); e.dataTransfer.setData("text/plain", `${i}`); }}
                                 onDragOver={(e)=> e.preventDefault()}
                                 onDrop={(e)=>{ e.preventDefault(); const from = dragState?.from ?? i; if (dragState?.kind === "edu") { reorderEducation(from, i); } setDragState(null); }}
                               >
-                                <div className="relative">
+                                <div className="relative pl-3">
                                   <div className="flex items-start justify-between gap-4 mb-1">
                                     <span
-                                      className={`outline-none ${ed.isPlaceholder ? "" : "font-bold"}`}
+                                      className={`outline-none text-base ${ed.isPlaceholder ? "" : "font-bold"}`}
                                       style={{ color: theme.color }}
                                       contentEditable
                                       suppressContentEditableWarning
                                       onBlur={(e)=> updateEducationItem(i,{school: (e.target as HTMLElement).innerText, isPlaceholder: false})}
                                     >{ed.school}</span>
-                                    <div className="text-xs font-medium whitespace-nowrap" style={{ color: '#9ca3af' }}>
+                                    <div className="text-xs font-semibold whitespace-nowrap px-2 py-1 rounded" style={{ backgroundColor: hexToRgba(theme.color, 0.1), color: theme.color }}>
                                       <span
                                         className="outline-none"
                                         contentEditable

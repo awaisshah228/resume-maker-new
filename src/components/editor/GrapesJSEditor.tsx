@@ -190,6 +190,37 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
           * {
             box-sizing: border-box;
           }
+          #profile-image-placeholder {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          #profile-image-placeholder:focus,
+          #profile-image-placeholder:active,
+          #profile-image-placeholder:focus-visible,
+          #profile-image-placeholder:hover {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          /* Prevent GrapesJS selection border on profile image */
+          [data-gjs-highlightable] #profile-image-placeholder,
+          [data-gjs-selected] #profile-image-placeholder,
+          [data-gjs-highlightable] #profile-image-placeholder *,
+          [data-gjs-selected] #profile-image-placeholder * {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
+          /* Prevent GrapesJS from adding borders to selected components containing profile image */
+          [data-gjs-selected] {
+            border-color: transparent !important;
+          }
+          [data-gjs-selected] #profile-image-placeholder {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
           @media (max-width: 768px) {
             .gjs-cv-canvas {
               overflow: auto !important;
@@ -1979,7 +2010,7 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
           <div style="background: linear-gradient(180deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 50px 30px;">
             <!-- Name & Title -->
             <div style="margin-bottom: 40px; text-align: center; border-bottom: 2px solid rgba(255,255,255,0.3); padding-bottom: 25px;">
-              <div id="profile-image-placeholder" style="width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.2); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; object-fit: cover; cursor: pointer; position: relative; border: 2px dashed rgba(255,255,255,0.5); transition: all 0.3s ease;" title="Click to upload or change photo">
+              <div id="profile-image-placeholder" style="width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.2); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; object-fit: cover; cursor: pointer; position: relative; border: none; outline: none; transition: all 0.3s ease;" title="Click to upload or change photo">
                 <img id="profile-image" src="" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none; pointer-events: none;" />
                 <span id="profile-emoji" style="display: inline-block; pointer-events: none;">👤</span>
                 <div id="upload-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 1;">
@@ -2267,16 +2298,18 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
             if (placeholder && !uploadState.isSetupComplete) {
               // Create new handlers
               const mouseenterHandler = () => {
-                placeholder.style.borderColor = 'rgba(255,255,255,0.8)';
                 placeholder.style.background = 'rgba(255,255,255,0.3)';
+                placeholder.style.border = 'none';
+                placeholder.style.outline = 'none';
                 if (uploadOverlay) {
                   (uploadOverlay as HTMLElement).style.opacity = '1';
                 }
               };
               
               const mouseleaveHandler = () => {
-                placeholder.style.borderColor = 'rgba(255,255,255,0.5)';
                 placeholder.style.background = 'rgba(255,255,255,0.2)';
+                placeholder.style.border = 'none';
+                placeholder.style.outline = 'none';
                 if (uploadOverlay) {
                   (uploadOverlay as HTMLElement).style.opacity = '0';
                 }
@@ -2285,6 +2318,11 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
               const clickHandler = (e: Event) => {
                 e.stopPropagation();
                 e.preventDefault();
+                
+                // Prevent any border from appearing
+                placeholder.style.border = 'none';
+                placeholder.style.outline = 'none';
+                placeholder.style.boxShadow = 'none';
                 
                 console.log('Placeholder clicked, triggering file input...');
                 
@@ -2297,6 +2335,12 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
                   // Use setTimeout to ensure it's not blocked by GrapesJS event handling
                   setTimeout(() => {
                     fileInput.click();
+                    // Ensure border stays removed after click
+                    setTimeout(() => {
+                      placeholder.style.border = 'none';
+                      placeholder.style.outline = 'none';
+                      placeholder.style.boxShadow = 'none';
+                    }, 100);
                   }, 50);
                 } else {
                   console.error('File input not found. Make sure the input element exists.');
@@ -2316,6 +2360,16 @@ export default function GrapesJSEditor({ onSave }: GrapesJSEditorProps) {
               placeholder.addEventListener('mouseenter', mouseenterHandler, { once: false });
               placeholder.addEventListener('mouseleave', mouseleaveHandler, { once: false });
               placeholder.addEventListener('click', clickHandler, { once: false });
+              
+              // Prevent GrapesJS from selecting this element
+              placeholder.setAttribute('data-gjs-highlightable', 'false');
+              placeholder.setAttribute('data-gjs-selectable', 'false');
+              
+              // Ensure no border appears
+              placeholder.style.border = 'none';
+              placeholder.style.outline = 'none';
+              placeholder.style.boxShadow = 'none';
+              
               uploadState.isSetupComplete = true;
             }
           }
